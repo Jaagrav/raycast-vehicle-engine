@@ -2,20 +2,30 @@ import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as CANNON from 'cannon-es'
+import Guify from 'guify'
 
+import {Car} from './world/car';
 
 /**
  * Base
  */
 // Canvas
+const gui = new Guify({align: 'right', theme: 'dark', width: '400px', barMode: 'none'})
+gui.Register({type: 'folder', label: 'Chassis', open: true})
+gui.Register({type: 'folder', label: 'Wheels', open: true})
+gui.Register({folder: 'Chassis', type: 'folder', label: 'Chassis Helper', open: true})
+gui.Register({folder: 'Chassis Helper', type: 'folder', label: 'Chassis Helper Dimension', open: true})
+gui.Register({folder: 'Wheels', type: 'folder', label: 'Wheels Helper', open: true})
+gui.Register({folder: 'Wheels Helper', type: 'folder', label: 'Wheel Helper Position', open: false})
+
+
 const canvas = document.querySelector('canvas.webgl')
+const scene = new THREE.Scene()
 const world = new CANNON.World({
     gravity: new CANNON.Vec3(0, -9.82, 0), // m/s²
 })  
+const car = new Car(scene, world, gui);
 world.broadphase = new CANNON.SAPBroadphase(world);
-
-// Scene
-const scene = new THREE.Scene()
 
 const bodyMaterial = new CANNON.Material();
 const groundMaterial = new CANNON.Material();
@@ -32,13 +42,29 @@ world.addContactMaterial(bodyGroundContactMaterial)
 /**
  * Lights
  */
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
-const spotLight = new THREE.SpotLight( 0xa257ff, 1.5, 0, 0.9, 1, 0 );
-spotLight.position.set( 7, 1.291, 6 );
-const spotLight2 = new THREE.SpotLight( 0x70fffd, 1.5, 0, 0.9, 1, 0 );
-spotLight2.position.set( -7, 1.291, 6 );
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.4)
+const spotLight = new THREE.SpotLight( 0x29dfff, 2, 0, 0.9, 1, 0 );
+spotLight.position.set( 7, 1.291, -6 );
+const spotLight2 = new THREE.SpotLight( 0x943dff, 2, 0, 0.9, 1, 0 );
+spotLight2.position.set( -7, 1.291, -6 );
+const spotLight3 = new THREE.SpotLight( 0xd5f8ff, 2, 0, 0.9, 1, 0 );
+spotLight3.position.set( 0, 1.291, 7 );
+scene.add(spotLight, spotLight2, spotLight3);
 
-scene.add(spotLight, spotLight2);
+/**
+ * Cube Texture Loader
+ */
+const cubeTextureLoader = new THREE.CubeTextureLoader()
+const cubeEnvironmentMapTexture = cubeTextureLoader.load([
+    "/textures/environmentMaps/2/px.jpg",
+    "/textures/environmentMaps/2/nx.jpg",
+    "/textures/environmentMaps/2/py.jpg",
+    "/textures/environmentMaps/2/ny.jpg",
+    "/textures/environmentMaps/2/pz.jpg",
+    "/textures/environmentMaps/2/nz.jpg",
+])
+// scene.background = cubeEnvironmentMapTexture
+scene.environment = cubeEnvironmentMapTexture
 
 /**
  * Sizes
@@ -70,10 +96,10 @@ const floorMesh = new THREE.Mesh(
     new THREE.PlaneBufferGeometry(100, 100),
     new THREE.MeshStandardMaterial({
         color: 0xffffff,
-        roughness: 1,
+        roughness: 0.5,
         metalness: 0,
-        emissive: 0x000000,
-        emissiveIntensity: 1,
+        emissive: 0xffffff,
+        emissiveIntensity: -0.36,
     })
 );
 floorMesh.rotation.x = -Math.PI * 0.5;
@@ -94,7 +120,7 @@ floorB.quaternion.setFromAxisAngle(
  * Camera
  */
 // Base camera
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 90)
+const camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 10000)
 camera.position.set(0, 4, 6)
 scene.add(camera)
 
