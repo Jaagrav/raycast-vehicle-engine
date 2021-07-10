@@ -139,7 +139,6 @@ export class Car {
             })
             const quaternion = new CANNON.Quaternion().setFromEuler(-Math.PI / 2, 0, 0)
             wheelBody.addShape(cylinderShape, new CANNON.Vec3(), quaternion)
-            obj.world.addBody(wheelBody)
             
             obj.wheels[index].wheelBody = wheelBody;
             obj.wheels[index].helpWheelsGeo = new THREE.CylinderGeometry(wheel.radius, wheel.radius, wheel.radius / 2, 20);

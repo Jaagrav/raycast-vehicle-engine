@@ -1,10 +1,16 @@
 import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { Reflector } from 'three/examples/jsm/objects/Reflector.js';
 import * as CANNON from 'cannon-es'
+import cannonDebugger from 'cannon-es-debugger'
 import Guify from 'guify'
-
+import Stats from 'stats.js';
 import {Car} from './world/car';
+
+var stats = new Stats();
+stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
+document.body.appendChild( stats.dom );
 
 /**
  * Base
@@ -24,6 +30,7 @@ const scene = new THREE.Scene()
 const world = new CANNON.World({
     gravity: new CANNON.Vec3(0, -9.82, 0), // m/s²
 })  
+// cannonDebugger(scene, world.bodies, {color: 0x00ff00})
 const car = new Car(scene, world, gui);
 world.broadphase = new CANNON.SAPBroadphase(world);
 
@@ -92,18 +99,30 @@ window.addEventListener('resize', () =>
 /**
  * Floor
  */
+const floorGeo = new THREE.PlaneBufferGeometry(100, 100);
+const floorMirror = new Reflector( floorGeo, {
+    clipBias: 0.003,
+    textureWidth: window.innerWidth * window.devicePixelRatio,
+    textureHeight: window.innerHeight * window.devicePixelRatio,
+    color: 0xffffff
+});
 const floorMesh = new THREE.Mesh(
-    new THREE.PlaneBufferGeometry(100, 100),
+    floorGeo,
     new THREE.MeshStandardMaterial({
         color: 0xffffff,
         roughness: 0.5,
         metalness: 0,
         emissive: 0xffffff,
         emissiveIntensity: -0.36,
+        transparent: true,
+        opacity: 0.7
     })
-);
+)
+floorMirror.rotation.x = -Math.PI * 0.5;
 floorMesh.rotation.x = -Math.PI * 0.5;
-scene.add(floorMesh)
+floorMesh.position.y = 0.001;
+scene.add(floorMirror, floorMesh)
+
 const floorS = new CANNON.Plane();
 const floorB = new CANNON.Body();
 floorB.mass = 0;
@@ -146,6 +165,7 @@ let lastCallTime
  
 const tick = () =>
 {
+    stats.begin();
     // Update controls
     controls.update()
 
@@ -160,7 +180,7 @@ const tick = () =>
 
     // Render
     renderer.render(scene, camera)
-
+    stats.end();
     // Call tick again on the next frame
     window.requestAnimationFrame(tick)
 }
