@@ -9,6 +9,7 @@ export class Car {
         this.world = world;
         this.gui = gui;
         this.loadingManager = loadingManager;
+        this.gltfLoader = new GLTFLoader(this.loadingManager);
 
         this.car = {};
         this.car.helpChassisGeo = {};
@@ -18,6 +19,7 @@ export class Car {
         this.wheels = [];
         this.chassisDimension = {x: 1.96, y: 1, z: 4.47};
         this.chassisModelPos = {x: 0, y: -0.59, z: 0};
+        this.wheelScale = {}
 
         this.loadModels();
     }
@@ -26,48 +28,67 @@ export class Car {
         this.setWheels();
         this.controls();
         this.update();
+        this.guiRegisterer();
+        this.loadViaModelUploader();
     }
     loadModels() {
         const demo_car = 'mclaren';
-        const gltfLoader = new GLTFLoader(this.loadingManager);
-        gltfLoader.load(`./models/${demo_car}/chassis.gltf`, gltf => {
+        this.gltfLoader.load(`./models/${demo_car}/chassis.gltf`, gltf => {
             this.chassis = gltf.scene;
             this.chassis.helpChassisGeo = new THREE.BoxBufferGeometry(1, 1, 1);
-            this.chassis.helpChassisMat = new THREE.MeshStandardMaterial({color: 0xff0000, wireframe: false});
+            this.chassis.helpChassisMat = new THREE.MeshBasicMaterial({color: 0xff0000, wireframe: true});
             this.chassis.helpChassis = new THREE.Mesh(this.chassis.helpChassisGeo, this.chassis.helpChassisMat);
-            this.scene.add(gltf.scene, this.chassis.helpChassis);
+            this.scene.add(this.chassis, this.chassis.helpChassis);
         })
-        let scale = {
+        this.wheelScale = {
             frontWheel: 0.67,
             hindWheel: 0.67,
         };
+        this.wheels = [];
         for(let i = 0 ; i < 4 ; i++) {
-            gltfLoader.load(`./models/${demo_car}/wheel.gltf`, gltf => {
+            this.gltfLoader.load(`./models/${demo_car}/wheel.gltf`, gltf => {
                 const model = gltf.scene;
                 this.wheels[i] = model;
                 if(i === 1 || i === 3)
-                    this.wheels[i].scale.set(-1 * scale.frontWheel, 1 * scale.frontWheel, -1 * scale.frontWheel);
+                    this.wheels[i].scale.set(-1 * this.wheelScale.frontWheel, 1 * this.wheelScale.frontWheel, -1 * this.wheelScale.frontWheel);
                 else
-                    this.wheels[i].scale.set(1 * scale.frontWheel, 1 * scale.frontWheel, 1 * scale.frontWheel);
-                this.scene.add(model); 
+                    this.wheels[i].scale.set(1 * this.wheelScale.frontWheel, 1 * this.wheelScale.frontWheel, 1 * this.wheelScale.frontWheel);
+                this.scene.add(this.wheels[i]); 
             })
         }
-        
-        this.gui.Register({folder: 'Upload', type: 'file', label: 'Upload Chassis Model (GLTF Only)', });
-        this.gui.Register({folder: 'Upload', type: 'file', label: 'Upload Wheel Model (GLTF Only)', });
-
-        this.gui.Register({folder: 'Wheels', object: scale, type: 'range', label: 'Front Wheels Scale', property: 'frontWheel', min: 0, max: 5, step: 0.01, onChange: () => {
-            for(let i = 0 ; i < 2 ; i++) {
-                const scaleSide = i === 1 ? -1 : 1;
-                this.wheels[i].scale.set(scaleSide * scale.frontWheel, 1 * scale.frontWheel, scaleSide * scale.frontWheel)
+    }
+    loadViaModelUploader() {
+        const obj = this;
+        const addChassisViaUpload = (e) => {
+            const gltfLoader = new GLTFLoader();
+            console.log("Adding Chassis");
+            gltfLoader.parse( e, '', function( gltf ){
+                obj.scene.remove(obj.chassis);
+                const temp = obj.chassis;
+                obj.chassis = gltf.scene;
+                obj.scene.add(obj.chassis);
+                obj.chassis = {...temp, ...gltf.scene};
+            });  
+        }
+        const addWheelViaUpload = (e) => {
+            console.log("Adding Wheels");
+            const gltfLoader = new GLTFLoader();
+            for(let i = 0 ; i < 4 ; i++) {
+                gltfLoader.parse( e, '', function( gltf ){
+                    obj.scene.remove(obj.wheels[i]);
+                    const temp = obj.wheels[i];
+                    obj.wheels[i] = gltf.scene;
+                    if(i === 1 || i === 3)
+                        obj.wheels[i].scale.set(-1 * obj.wheelScale.frontWheel, 1 * obj.wheelScale.frontWheel, -1 * obj.wheelScale.frontWheel);
+                    else
+                        obj.wheels[i].scale.set(1 * obj.wheelScale.frontWheel, 1 * obj.wheelScale.frontWheel, 1 * obj.wheelScale.frontWheel);
+                    obj.scene.add(obj.wheels[i]);
+                    obj.wheels[i] = {...temp, ...gltf.scene}; 
+                })
             }
-        }})
-        this.gui.Register({folder: 'Wheels', object: scale, type: 'range', label: 'Hind Wheels Scale', property: 'hindWheel', min: 0, max: 5, step: 0.01, onChange: () => {
-            for(let i = 2 ; i < 4 ; i++) {
-                const scaleSide = i === 3 ? -1 : 1;
-                this.wheels[i].scale.set(scaleSide * scale.hindWheel, 1 * scale.hindWheel, scaleSide * scale.hindWheel)
-            }
-        }})
+        };
+        obj.gui.Register({folder: 'Upload', type: 'file', label: 'Upload Chassis Model (GLTF Only)', fileReadFunc: "readAsArrayBuffer", onChange: addChassisViaUpload});
+        obj.gui.Register({folder: 'Upload', type: 'file', label: 'Upload Wheel Model (GLTF Only)', fileReadFunc: "readAsArrayBuffer", onChange: addWheelViaUpload});
     }
     setChassis() {
         //Setting up the chassis
@@ -85,40 +106,8 @@ export class Car {
             indexForwardAxis: 2
         });
         this.car.addToWorld(this.world);
-
-        const resetCar = () => {
-            this.car.chassisBody.position.set(0, 4, 0);
-            this.car.chassisBody.quaternion.set(0, 0, 0, 1);
-            this.car.chassisBody.angularVelocity.set(0, 0, 0);
-            this.car.chassisBody.velocity.set(0, 0, 0);
-        }
-        const stopCar = () => {
-            this.car.setBrake(1000, 0);
-            this.car.setBrake(1000, 1);
-            setTimeout(() => {
-                this.car.setBrake(0, 0);
-                this.car.setBrake(0, 1);
-            }, 100)
-        }
-        const updateGuiChanges = () => {
-            this.car.chassisBody.shapes = [];
-            this.car.chassisBody.addShape(new CANNON.Box(new CANNON.Vec3(this.chassisDimension.x * 0.5, this.chassisDimension.y * 0.5, this.chassisDimension.z * 0.5)));
-            this.chassis.helpChassis.scale.set(this.chassisDimension.x, this.chassisDimension.y, this.chassisDimension.z);
-        }
-        resetCar();
-
-        this.gui.Register({folder: 'Chassis Helper Dimension', object: this.chassisDimension, property: 'x', type: 'range', label: 'x', min: 0, max: 10, step: 0.01, onChange: updateGuiChanges})
-        this.gui.Register({folder: 'Chassis Helper Dimension', object: this.chassisDimension, property: 'y', type: 'range', label: 'y', min: 0, max: 10, step: 0.01, onChange: updateGuiChanges})
-        this.gui.Register({folder: 'Chassis Helper Dimension', object: this.chassisDimension, property: 'z', type: 'range', label: 'z', min: 0, max: 10, step: 0.01, onChange: updateGuiChanges})
-        this.gui.Register({folder: 'Chassis Helper', type: 'checkbox', label: 'Show Chassis Helper', object: this.chassis.helpChassis, property:'visible'})
-        this.gui.Register({folder: 'Chassis Helper', type: 'button', label: 'Reset Position', action: resetCar})
-        this.gui.Register({folder: 'Chassis Helper', type: 'button', label: 'Stop Car', action: stopCar})
-        this.gui.Register({folder: 'Chassis Model Position', object: this.chassisModelPos, property: 'x', type: 'range', label: 'x', min: -10, max: 10, step: 0.01,})
-        this.gui.Register({folder: 'Chassis Model Position', object: this.chassisModelPos, property: 'y', type: 'range', label: 'y', min: -10, max: 10, step: 0.01,})
-        this.gui.Register({folder: 'Chassis Model Position', object: this.chassisModelPos, property: 'z', type: 'range', label: 'z', min: -10, max: 10, step: 0.01,})
     }
     setWheels() {
-        const obj = this;
         const options = {
             radius: 0.34,
             directionLocal: new CANNON.Vec3(0, -1, 0),
@@ -138,6 +127,7 @@ export class Car {
             this.car.wheelInfos[index].chassisConnectionPointLocal.copy(position);
         }
 
+        this.car.wheelInfos = [];
         this.car.addWheel(options);
         this.car.addWheel(options);
         this.car.addWheel(options);
@@ -155,61 +145,16 @@ export class Car {
             })
             const quaternion = new CANNON.Quaternion().setFromEuler(-Math.PI / 2, 0, 0)
             wheelBody.addShape(cylinderShape, new CANNON.Vec3(), quaternion)
-            
-            obj.wheels[index].wheelBody = wheelBody;
-            obj.wheels[index].helpWheelsGeo = new THREE.CylinderGeometry(wheel.radius, wheel.radius, wheel.radius / 2, 20);
-            obj.wheels[index].helpWheelsGeo.rotateZ(Math.PI / 2);
-            obj.wheels[index].helpWheelsMat = new THREE.MeshStandardMaterial({color: 0x00ffff});
-            obj.wheels[index].helpWheels = new THREE.Mesh(obj.wheels[index].helpWheelsGeo, obj.wheels[index].helpWheelsMat);
-            obj.wheels[index].helpWheels.visible = false;
-            obj.scene.add(obj.wheels[index].helpWheels);
-        });
-
-        this.gui.Register({folder: 'Wheels Helper', type: 'checkbox', label: 'Show Wheels Helper', object: this.wheels[0].helpWheels, property:'visible', onChange: () => {
-            for (let i = 0 ; i < 4 ; i++)
-            this.wheels[i].helpWheels.visible = this.wheels[0].helpWheels.visible;
-        }})
-
-        this.gui.Register({folder: 'Wheels Helper', object: this.car.wheelInfos[2], property: 'radius', type: 'range', label: 'Front Wheels Radius', min: 0.1, max: 5, step: 0.01, onChange: () => {
-            this.car.wheelInfos[2].radius = this.car.wheelInfos[2].radius;
-            this.car.wheelInfos[3].radius = this.car.wheelInfos[2].radius;
-            const cylinderGeometry = new THREE.CylinderGeometry(this.car.wheelInfos[2].radius, this.car.wheelInfos[2].radius, this.car.wheelInfos[2].radius / 2, 20);
-            cylinderGeometry.rotateZ(Math.PI / 2);
-            obj.wheels[2].helpWheels.geometry = cylinderGeometry;
-            obj.wheels[3].helpWheels.geometry = cylinderGeometry;
-        }})
-
-        this.gui.Register({folder: 'Wheels Helper', object: this.car.wheelInfos[0], property: 'radius', type: 'range', label: 'Hind Wheels Radius', min: 0.1, max: 5, step: 0.01, onChange: () => {
-            this.car.wheelInfos[0].radius = this.car.wheelInfos[0].radius;
-            this.car.wheelInfos[1].radius = this.car.wheelInfos[0].radius;
-            const cylinderGeometry = new THREE.CylinderGeometry(this.car.wheelInfos[0].radius, this.car.wheelInfos[0].radius, this.car.wheelInfos[0].radius / 2, 20);
-            cylinderGeometry.rotateZ(Math.PI / 2);
-            obj.wheels[0].helpWheels.geometry = cylinderGeometry;
-            obj.wheels[1].helpWheels.geometry = cylinderGeometry;
-        }})
-        
-        this.gui.Register({folder: 'Wheel Helper Position', type: 'folder', label: 'Left Front Wheel', open: true})
-        this.gui.Register({folder: 'Left Front Wheel', object: this.car.wheelInfos[2].chassisConnectionPointLocal, property: 'x', type: 'range', label: 'x', min: -10, max: 10, step: 0.01})
-        this.gui.Register({folder: 'Left Front Wheel', object: this.car.wheelInfos[2].chassisConnectionPointLocal, property: 'y', type: 'range', label: 'y', min: -10, max: 10, step: 0.01})
-        this.gui.Register({folder: 'Left Front Wheel', object: this.car.wheelInfos[2].chassisConnectionPointLocal, property: 'z', type: 'range', label: 'z', min: -10, max: 10, step: 0.01})
-        
-        this.gui.Register({folder: 'Wheel Helper Position', type: 'folder', label: 'Right Front Wheel', open: true})
-        this.gui.Register({folder: 'Right Front Wheel', object: this.car.wheelInfos[3].chassisConnectionPointLocal, property: 'x', type: 'range', label: 'x', min: -10, max: 10, step: 0.01})
-        this.gui.Register({folder: 'Right Front Wheel', object: this.car.wheelInfos[3].chassisConnectionPointLocal, property: 'y', type: 'range', label: 'y', min: -10, max: 10, step: 0.01})
-        this.gui.Register({folder: 'Right Front Wheel', object: this.car.wheelInfos[3].chassisConnectionPointLocal, property: 'z', type: 'range', label: 'z', min: -10, max: 10, step: 0.01})
-        
-        this.gui.Register({folder: 'Wheel Helper Position', type: 'folder', label: 'Left Hind Wheel', open: true})
-        this.gui.Register({folder: 'Left Hind Wheel', object: this.car.wheelInfos[0].chassisConnectionPointLocal, property: 'x', type: 'range', label: 'x', min: -10, max: 10, step: 0.01})
-        this.gui.Register({folder: 'Left Hind Wheel', object: this.car.wheelInfos[0].chassisConnectionPointLocal, property: 'y', type: 'range', label: 'y', min: -10, max: 10, step: 0.01})
-        this.gui.Register({folder: 'Left Hind Wheel', object: this.car.wheelInfos[0].chassisConnectionPointLocal, property: 'z', type: 'range', label: 'z', min: -10, max: 10, step: 0.01})
-        
-        this.gui.Register({folder: 'Wheel Helper Position', type: 'folder', label: 'Right Hind Wheel', open: true})
-        this.gui.Register({folder: 'Right Hind Wheel', object: this.car.wheelInfos[1].chassisConnectionPointLocal, property: 'x', type: 'range', label: 'x', min: -10, max: 10, step: 0.01})
-        this.gui.Register({folder: 'Right Hind Wheel', object: this.car.wheelInfos[1].chassisConnectionPointLocal, property: 'y', type: 'range', label: 'y', min: -10, max: 10, step: 0.01})
-        this.gui.Register({folder: 'Right Hind Wheel', object: this.car.wheelInfos[1].chassisConnectionPointLocal, property: 'z', type: 'range', label: 'z', min: -10, max: 10, step: 0.01})
-        
-        console.log(this.car.wheelInfos, obj.wheels[0].helpWheels)
+            this.wheels[index].wheelBody = wheelBody;
+            this.wheels[index].helpWheelsGeo = new THREE.CylinderGeometry(wheel.radius, wheel.radius, wheel.radius / 2, 20);
+            this.wheels[index].helpWheelsGeo.rotateZ(Math.PI / 2);
+            this.wheels[index].helpWheelsMat = new THREE.MeshBasicMaterial({color: 0x00ffff, wireframe: true});
+            this.wheels[index].helpWheels = new THREE.Mesh(this.wheels[index].helpWheelsGeo, this.wheels[index].helpWheelsMat);
+            this.wheels[index].helpWheels.visible = false;
+            this.scene.add(this.wheels[index].helpWheels);
+        }.bind(this));
     }
+    
     controls() {
         const maxSteerVal = 0.5;
         const maxForce = 750;
@@ -284,9 +229,101 @@ export class Car {
             this.car.setSteeringValue(0, 3);
         }
     }
+
+    guiRegisterer() {
+        const resetCar = () => {
+            this.car.chassisBody.position.set(0, 4, 0);
+            this.car.chassisBody.quaternion.set(0, 0, 0, 1);
+            this.car.chassisBody.angularVelocity.set(0, 0, 0);
+            this.car.chassisBody.velocity.set(0, 0, 0);
+        }
+        const stopCar = () => {
+            this.car.setBrake(1000, 0);
+            this.car.setBrake(1000, 1);
+            setTimeout(() => {
+                this.car.setBrake(0, 0);
+                this.car.setBrake(0, 1);
+            }, 100)
+        }
+        const updateGuiChanges = () => {
+            this.car.chassisBody.shapes = [];
+            this.car.chassisBody.addShape(new CANNON.Box(new CANNON.Vec3(this.chassisDimension.x * 0.5, this.chassisDimension.y * 0.5, this.chassisDimension.z * 0.5)));
+            this.chassis.helpChassis.scale.set(this.chassisDimension.x, this.chassisDimension.y, this.chassisDimension.z);
+        }
+        resetCar();
+
+        this.gui.Register({folder: 'Chassis Helper Dimension', object: this.chassisDimension, property: 'x', type: 'range', label: 'x', min: 0, max: 10, step: 0.01, onChange: updateGuiChanges})
+        this.gui.Register({folder: 'Chassis Helper Dimension', object: this.chassisDimension, property: 'y', type: 'range', label: 'y', min: 0, max: 10, step: 0.01, onChange: updateGuiChanges})
+        this.gui.Register({folder: 'Chassis Helper Dimension', object: this.chassisDimension, property: 'z', type: 'range', label: 'z', min: 0, max: 10, step: 0.01, onChange: updateGuiChanges})
+        this.gui.Register({folder: 'Chassis Helper', type: 'checkbox', label: 'Show Chassis Helper', object: this.chassis.helpChassis, property:'visible'})
+        this.gui.Register({folder: 'Chassis Helper', type: 'button', label: 'Reset Position', action: resetCar})
+        this.gui.Register({folder: 'Chassis Helper', type: 'button', label: 'Stop Car', action: stopCar})
+        this.gui.Register({folder: 'Chassis Model Position', object: this.chassisModelPos, property: 'x', type: 'range', label: 'x', min: -10, max: 10, step: 0.01,})
+        this.gui.Register({folder: 'Chassis Model Position', object: this.chassisModelPos, property: 'y', type: 'range', label: 'y', min: -10, max: 10, step: 0.01,})
+        this.gui.Register({folder: 'Chassis Model Position', object: this.chassisModelPos, property: 'z', type: 'range', label: 'z', min: -10, max: 10, step: 0.01,})
+        
+        this.gui.Register({folder: 'Wheels', object: this.wheelScale, type: 'range', label: 'Front Wheels Scale', property: 'frontWheel', min: 0, max: 5, step: 0.01, onChange: () => {
+            for(let i = 2 ; i < 4 ; i++) {
+                const scaleSide = i === 3 ? -1 : 1;
+                this.wheels[i].scale.set(scaleSide * this.wheelScale.frontWheel, 1 * this.wheelScale.frontWheel, scaleSide * this.wheelScale.frontWheel)
+            }
+        }})
+        this.gui.Register({folder: 'Wheels', object: this.wheelScale, type: 'range', label: 'Hind Wheels Scale', property: 'hindWheel', min: 0, max: 5, step: 0.01, onChange: () => {
+            for(let i = 0 ; i < 2 ; i++) {
+                const scaleSide = i === 1 ? -1 : 1;
+                this.wheels[i].scale.set(scaleSide * this.wheelScale.hindWheel, 1 * this.wheelScale.hindWheel, scaleSide * this.wheelScale.hindWheel)
+            }
+        }})
+
+        this.gui.Register({folder: 'Wheels Helper', type: 'checkbox', label: 'Show Wheels Helper', object: this.wheels[0].helpWheels, property:'visible', onChange: () => {
+            console.log(this.wheels);
+            for (let i = 0 ; i < 4 ; i++)
+            this.wheels[i].helpWheels.visible = this.wheels[0].helpWheels.visible;
+
+        }});
+
+        this.gui.Register({folder: 'Wheels Helper', object: this.car.wheelInfos[2], property: 'radius', type: 'range', label: 'Front Wheels Radius', min: 0.1, max: 5, step: 0.01, onChange: () => {
+            this.car.wheelInfos[2].radius = this.car.wheelInfos[2].radius;
+            this.car.wheelInfos[3].radius = this.car.wheelInfos[2].radius;
+            const cylinderGeometry = new THREE.CylinderGeometry(this.car.wheelInfos[2].radius, this.car.wheelInfos[2].radius, this.car.wheelInfos[2].radius / 2, 20);
+            cylinderGeometry.rotateZ(Math.PI / 2);
+            this.wheels[2].helpWheels.geometry = cylinderGeometry;
+            this.wheels[3].helpWheels.geometry = cylinderGeometry;
+        }});
+
+        this.gui.Register({folder: 'Wheels Helper', object: this.car.wheelInfos[0], property: 'radius', type: 'range', label: 'Hind Wheels Radius', min: 0.1, max: 5, step: 0.01, onChange: () => {
+            this.car.wheelInfos[0].radius = this.car.wheelInfos[0].radius;
+            this.car.wheelInfos[1].radius = this.car.wheelInfos[0].radius;
+            const cylinderGeometry = new THREE.CylinderGeometry(this.car.wheelInfos[0].radius, this.car.wheelInfos[0].radius, this.car.wheelInfos[0].radius / 2, 20);
+            cylinderGeometry.rotateZ(Math.PI / 2);
+            this.wheels[0].helpWheels.geometry = cylinderGeometry;
+            this.wheels[1].helpWheels.geometry = cylinderGeometry;
+        }});
+        
+        this.gui.Register({folder: 'Wheel Helper Position', type: 'folder', label: 'Left Front Wheel', open: true});
+        this.gui.Register({folder: 'Left Front Wheel', object: this.car.wheelInfos[2].chassisConnectionPointLocal, property: 'x', type: 'range', label: 'x', min: -10, max: 10, step: 0.01});
+        this.gui.Register({folder: 'Left Front Wheel', object: this.car.wheelInfos[2].chassisConnectionPointLocal, property: 'y', type: 'range', label: 'y', min: -10, max: 10, step: 0.01});
+        this.gui.Register({folder: 'Left Front Wheel', object: this.car.wheelInfos[2].chassisConnectionPointLocal, property: 'z', type: 'range', label: 'z', min: -10, max: 10, step: 0.01});
+        
+        this.gui.Register({folder: 'Wheel Helper Position', type: 'folder', label: 'Right Front Wheel', open: true});
+        this.gui.Register({folder: 'Right Front Wheel', object: this.car.wheelInfos[3].chassisConnectionPointLocal, property: 'x', type: 'range', label: 'x', min: -10, max: 10, step: 0.01});
+        this.gui.Register({folder: 'Right Front Wheel', object: this.car.wheelInfos[3].chassisConnectionPointLocal, property: 'y', type: 'range', label: 'y', min: -10, max: 10, step: 0.01});
+        this.gui.Register({folder: 'Right Front Wheel', object: this.car.wheelInfos[3].chassisConnectionPointLocal, property: 'z', type: 'range', label: 'z', min: -10, max: 10, step: 0.01});
+        
+        this.gui.Register({folder: 'Wheel Helper Position', type: 'folder', label: 'Left Hind Wheel', open: true});
+        this.gui.Register({folder: 'Left Hind Wheel', object: this.car.wheelInfos[0].chassisConnectionPointLocal, property: 'x', type: 'range', label: 'x', min: -10, max: 10, step: 0.01});
+        this.gui.Register({folder: 'Left Hind Wheel', object: this.car.wheelInfos[0].chassisConnectionPointLocal, property: 'y', type: 'range', label: 'y', min: -10, max: 10, step: 0.01});
+        this.gui.Register({folder: 'Left Hind Wheel', object: this.car.wheelInfos[0].chassisConnectionPointLocal, property: 'z', type: 'range', label: 'z', min: -10, max: 10, step: 0.01});
+        
+        this.gui.Register({folder: 'Wheel Helper Position', type: 'folder', label: 'Right Hind Wheel', open: true});
+        this.gui.Register({folder: 'Right Hind Wheel', object: this.car.wheelInfos[1].chassisConnectionPointLocal, property: 'x', type: 'range', label: 'x', min: -10, max: 10, step: 0.01});
+        this.gui.Register({folder: 'Right Hind Wheel', object: this.car.wheelInfos[1].chassisConnectionPointLocal, property: 'y', type: 'range', label: 'y', min: -10, max: 10, step: 0.01});
+        this.gui.Register({folder: 'Right Hind Wheel', object: this.car.wheelInfos[1].chassisConnectionPointLocal, property: 'z', type: 'range', label: 'z', min: -10, max: 10, step: 0.01});
+    }
+
     update() {
         const updateWorld = () => {
-            if(this.car && this.chassis){
+            if(this.car && this.chassis && this.wheels[0]){
                 this.chassis.position.set(
                     this.car.chassisBody.position.x + this.chassisModelPos.x,
                     this.car.chassisBody.position.y + this.chassisModelPos.y,
@@ -296,11 +333,13 @@ export class Car {
                 this.chassis.helpChassis.position.copy(this.car.chassisBody.position);
                 this.chassis.helpChassis.quaternion.copy(this.car.chassisBody.quaternion);
                 for(let i = 0 ; i < 4 ; i++) {
-                    this.car.updateWheelTransform(i);
-                    this.wheels[i].position.copy(this.car.wheelInfos[i].worldTransform.position);
-                    this.wheels[i].quaternion.copy(this.car.wheelInfos[i].worldTransform.quaternion);
-                    this.wheels[i].helpWheels.position.copy(this.car.wheelInfos[i].worldTransform.position);
-                    this.wheels[i].helpWheels.quaternion.copy(this.car.wheelInfos[i].worldTransform.quaternion);
+                    if(this.wheels[i].helpWheels && this.car.wheelInfos[i]) {
+                        this.car.updateWheelTransform(i);
+                        this.wheels[i].position.copy(this.car.wheelInfos[i].worldTransform.position);
+                        this.wheels[i].quaternion.copy(this.car.wheelInfos[i].worldTransform.quaternion);
+                        this.wheels[i].helpWheels.position.copy(this.car.wheelInfos[i].worldTransform.position);
+                        this.wheels[i].helpWheels.quaternion.copy(this.car.wheelInfos[i].worldTransform.quaternion);
+                    }
                 }
             }
         }
