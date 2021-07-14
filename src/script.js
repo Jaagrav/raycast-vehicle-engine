@@ -17,22 +17,29 @@ document.body.appendChild( stats.dom );
  */
 // Canvas
 const gui = new Guify({align: 'right', theme: 'dark', width: '400px', barMode: 'none'})
+gui.Register({type: 'folder', label: 'Upload', open: true})
 gui.Register({type: 'folder', label: 'Chassis', open: true})
 gui.Register({type: 'folder', label: 'Wheels', open: true})
 gui.Register({folder: 'Chassis', type: 'folder', label: 'Chassis Helper', open: true})
+gui.Register({folder: 'Chassis', type: 'folder', label: 'Chassis Model', open: true})
 gui.Register({folder: 'Chassis Helper', type: 'folder', label: 'Chassis Helper Dimension', open: true})
+gui.Register({folder: 'Chassis Model', type: 'folder', label: 'Chassis Model Position', open: true})
 gui.Register({folder: 'Wheels', type: 'folder', label: 'Wheels Helper', open: true})
 gui.Register({folder: 'Wheels Helper', type: 'folder', label: 'Wheel Helper Position', open: false})
 
-
+const loadingManager = new THREE.LoadingManager();
 const canvas = document.querySelector('canvas.webgl')
 const scene = new THREE.Scene()
 const world = new CANNON.World({
     gravity: new CANNON.Vec3(0, -9.82, 0), // m/s²
 })  
-// cannonDebugger(scene, world.bodies, {color: 0x00ff00})
-const car = new Car(scene, world, gui);
 world.broadphase = new CANNON.SAPBroadphase(world);
+// cannonDebugger(scene, world.bodies, {color: 0x00ff00})
+
+const car = new Car(scene, world, gui, loadingManager);
+loadingManager.onLoad = () => {
+    car.init();
+}
 
 const bodyMaterial = new CANNON.Material();
 const groundMaterial = new CANNON.Material();

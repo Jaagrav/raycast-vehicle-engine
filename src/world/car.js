@@ -4,10 +4,11 @@ import * as CANNON from 'cannon-es';
 import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader';
 
 export class Car {
-    constructor(scene, world, gui) {
+    constructor(scene, world, gui, loadingManager) {
         this.scene = scene;
         this.world = world;
         this.gui = gui;
+        this.loadingManager = loadingManager;
 
         this.car = {};
         this.car.helpChassisGeo = {};
@@ -16,6 +17,7 @@ export class Car {
         this.chassis = {};
         this.wheels = [];
         this.chassisDimension = {x: 1.96, y: 1, z: 4.47};
+        this.chassisModelPos = {x: 0, y: -0.59, z: 0};
 
         this.loadModels();
     }
@@ -26,33 +28,44 @@ export class Car {
         this.update();
     }
     loadModels() {
-        const loadingManager = new THREE.LoadingManager(() => this.init());
-        const gltfLoader = new GLTFLoader(loadingManager);
-        gltfLoader.load("./models/mclaren/chassis.gltf", gltf => {
+        const demo_car = 'mclaren';
+        const gltfLoader = new GLTFLoader(this.loadingManager);
+        gltfLoader.load(`./models/${demo_car}/chassis.gltf`, gltf => {
             this.chassis = gltf.scene;
             this.chassis.helpChassisGeo = new THREE.BoxBufferGeometry(1, 1, 1);
             this.chassis.helpChassisMat = new THREE.MeshStandardMaterial({color: 0xff0000, wireframe: false});
             this.chassis.helpChassis = new THREE.Mesh(this.chassis.helpChassisGeo, this.chassis.helpChassisMat);
             this.scene.add(gltf.scene, this.chassis.helpChassis);
         })
-        let scale = {wheel: 0.67};
+        let scale = {
+            frontWheel: 0.67,
+            hindWheel: 0.67,
+        };
         for(let i = 0 ; i < 4 ; i++) {
-            gltfLoader.load("./models/mclaren/wheel.gltf", gltf => {
+            gltfLoader.load(`./models/${demo_car}/wheel.gltf`, gltf => {
                 const model = gltf.scene;
                 this.wheels[i] = model;
                 if(i === 1 || i === 3)
-                    this.wheels[i].scale.set(-1 * scale.wheel, 1 * scale.wheel, -1 * scale.wheel);
+                    this.wheels[i].scale.set(-1 * scale.frontWheel, 1 * scale.frontWheel, -1 * scale.frontWheel);
                 else
-                    this.wheels[i].scale.set(1 * scale.wheel, 1 * scale.wheel, 1 * scale.wheel);
+                    this.wheels[i].scale.set(1 * scale.frontWheel, 1 * scale.frontWheel, 1 * scale.frontWheel);
                 this.scene.add(model); 
             })
         }
-        this.gui.Register({folder: 'Wheels', object: scale, type: 'range', label: 'Front Wheel Scale', property: 'wheel', min: 0, max: 5, step: 0.01, onChange: () => {
-            for(let i = 0 ; i < 4 ; i++) {
-                if(i === 1 || i === 3)
-                    this.wheels[i].scale.set(-1 * scale.wheel, 1 * scale.wheel, -1 * scale.wheel)
-                else
-                    this.wheels[i].scale.set(1 * scale.wheel, 1 * scale.wheel, 1 * scale.wheel)
+        
+        this.gui.Register({folder: 'Upload', type: 'file', label: 'Upload Chassis Model (GLTF Only)', });
+        this.gui.Register({folder: 'Upload', type: 'file', label: 'Upload Wheel Model (GLTF Only)', });
+
+        this.gui.Register({folder: 'Wheels', object: scale, type: 'range', label: 'Front Wheels Scale', property: 'frontWheel', min: 0, max: 5, step: 0.01, onChange: () => {
+            for(let i = 0 ; i < 2 ; i++) {
+                const scaleSide = i === 1 ? -1 : 1;
+                this.wheels[i].scale.set(scaleSide * scale.frontWheel, 1 * scale.frontWheel, scaleSide * scale.frontWheel)
+            }
+        }})
+        this.gui.Register({folder: 'Wheels', object: scale, type: 'range', label: 'Hind Wheels Scale', property: 'hindWheel', min: 0, max: 5, step: 0.01, onChange: () => {
+            for(let i = 2 ; i < 4 ; i++) {
+                const scaleSide = i === 3 ? -1 : 1;
+                this.wheels[i].scale.set(scaleSide * scale.hindWheel, 1 * scale.hindWheel, scaleSide * scale.hindWheel)
             }
         }})
     }
@@ -100,6 +113,9 @@ export class Car {
         this.gui.Register({folder: 'Chassis Helper', type: 'checkbox', label: 'Show Chassis Helper', object: this.chassis.helpChassis, property:'visible'})
         this.gui.Register({folder: 'Chassis Helper', type: 'button', label: 'Reset Position', action: resetCar})
         this.gui.Register({folder: 'Chassis Helper', type: 'button', label: 'Stop Car', action: stopCar})
+        this.gui.Register({folder: 'Chassis Model Position', object: this.chassisModelPos, property: 'x', type: 'range', label: 'x', min: -10, max: 10, step: 0.01,})
+        this.gui.Register({folder: 'Chassis Model Position', object: this.chassisModelPos, property: 'y', type: 'range', label: 'y', min: -10, max: 10, step: 0.01,})
+        this.gui.Register({folder: 'Chassis Model Position', object: this.chassisModelPos, property: 'z', type: 'range', label: 'z', min: -10, max: 10, step: 0.01,})
     }
     setWheels() {
         const obj = this;
@@ -272,9 +288,9 @@ export class Car {
         const updateWorld = () => {
             if(this.car && this.chassis){
                 this.chassis.position.set(
-                    this.car.chassisBody.position.x,
-                    this.car.chassisBody.position.y - 0.6,
-                    this.car.chassisBody.position.z
+                    this.car.chassisBody.position.x + this.chassisModelPos.x,
+                    this.car.chassisBody.position.y + this.chassisModelPos.y,
+                    this.car.chassisBody.position.z + this.chassisModelPos.z
                 );
                 this.chassis.quaternion.copy(this.car.chassisBody.quaternion);
                 this.chassis.helpChassis.position.copy(this.car.chassisBody.position);
