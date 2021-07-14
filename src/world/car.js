@@ -61,7 +61,6 @@ export class Car {
         const obj = this;
         const addChassisViaUpload = (e) => {
             const gltfLoader = new GLTFLoader();
-            console.log("Adding Chassis");
             gltfLoader.parse( e, '', function( gltf ){
                 obj.scene.remove(obj.chassis);
                 const temp = obj.chassis;
@@ -71,7 +70,6 @@ export class Car {
             });  
         }
         const addWheelViaUpload = (e) => {
-            console.log("Adding Wheels");
             const gltfLoader = new GLTFLoader();
             for(let i = 0 ; i < 4 ; i++) {
                 gltfLoader.parse( e, '', function( gltf ){
@@ -243,7 +241,13 @@ export class Car {
             setTimeout(() => {
                 this.car.setBrake(0, 0);
                 this.car.setBrake(0, 1);
-            }, 100)
+            }, 100);
+            this.car.applyEngineForce(0, 0);
+            this.car.applyEngineForce(0, 1);
+            this.car.applyEngineForce(0, 2);
+            this.car.applyEngineForce(0, 3);
+            this.car.chassisBody.angularVelocity.set(0, 0, 0);
+            this.car.chassisBody.velocity.set(0, 0, 0);
         }
         const updateGuiChanges = () => {
             this.car.chassisBody.shapes = [];
@@ -276,7 +280,6 @@ export class Car {
         }})
 
         this.gui.Register({folder: 'Wheels Helper', type: 'checkbox', label: 'Show Wheels Helper', object: this.wheels[0].helpWheels, property:'visible', onChange: () => {
-            console.log(this.wheels);
             for (let i = 0 ; i < 4 ; i++)
             this.wheels[i].helpWheels.visible = this.wheels[0].helpWheels.visible;
 
