@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 
-import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 
 export class Car {
     constructor(scene, world, gui, loadingManager) {
@@ -9,7 +10,6 @@ export class Car {
         this.world = world;
         this.gui = gui;
         this.loadingManager = loadingManager;
-        this.gltfLoader = new GLTFLoader(this.loadingManager);
 
         this.car = {};
         this.car.helpChassisGeo = {};
@@ -32,8 +32,17 @@ export class Car {
         this.loadViaModelUploader();
     }
     loadModels() {
+        const gltfLoader = new GLTFLoader(this.loadingManager);
+        const dracoLoader = new DRACOLoader();
+
+        dracoLoader.setDecoderConfig({ type: 'js' })
+        dracoLoader.setDecoderPath('draco/');
+
+        gltfLoader.setDRACOLoader(dracoLoader);
+
         const demo_car = 'mclaren';
-        this.gltfLoader.load(`./models/${demo_car}/chassis.gltf`, gltf => {
+
+        gltfLoader.load(`./models/${demo_car}/draco/chassis.gltf`, gltf => {
             this.chassis = gltf.scene;
             this.chassis.helpChassisGeo = new THREE.BoxBufferGeometry(1, 1, 1);
             this.chassis.helpChassisMat = new THREE.MeshBasicMaterial({color: 0xff0000, wireframe: true});
@@ -46,14 +55,14 @@ export class Car {
         };
         this.wheels = [];
         for(let i = 0 ; i < 4 ; i++) {
-            this.gltfLoader.load(`./models/${demo_car}/wheel.gltf`, gltf => {
+            gltfLoader.load(`./models/${demo_car}/draco/wheel.gltf`, gltf => {
                 const model = gltf.scene;
                 this.wheels[i] = model;
                 if(i === 1 || i === 3)
                     this.wheels[i].scale.set(-1 * this.wheelScale.frontWheel, 1 * this.wheelScale.frontWheel, -1 * this.wheelScale.frontWheel);
                 else
                     this.wheels[i].scale.set(1 * this.wheelScale.frontWheel, 1 * this.wheelScale.frontWheel, 1 * this.wheelScale.frontWheel);
-                this.scene.add(this.wheels[i]); 
+                this.scene.add(this.wheels[i]);
             })
         }
     }
@@ -67,7 +76,7 @@ export class Car {
                 obj.chassis = gltf.scene;
                 obj.scene.add(obj.chassis);
                 obj.chassis = {...temp, ...gltf.scene};
-            });  
+            });
         }
         const addWheelViaUpload = (e) => {
             const gltfLoader = new GLTFLoader();
@@ -81,7 +90,7 @@ export class Car {
                     else
                         obj.wheels[i].scale.set(1 * obj.wheelScale.frontWheel, 1 * obj.wheelScale.frontWheel, 1 * obj.wheelScale.frontWheel);
                     obj.scene.add(obj.wheels[i]);
-                    obj.wheels[i] = {...temp, ...gltf.scene}; 
+                    obj.wheels[i] = {...temp, ...gltf.scene};
                 })
             }
         };
@@ -152,7 +161,7 @@ export class Car {
             this.scene.add(this.wheels[index].helpWheels);
         }.bind(this));
     }
-    
+
     controls() {
         const maxSteerVal = 0.5;
         const maxForce = 750;
@@ -161,13 +170,13 @@ export class Car {
 
         window.addEventListener('keydown', (e) => {
             if(e.key === 'r') resetCar();
-            if(!keysPressed.includes(e.keyCode)) keysPressed.push(e.keyCode); 
+            if(!keysPressed.includes(e.keyCode)) keysPressed.push(e.keyCode);
             hindMovement();
         });
         window.addEventListener('keyup', (e) => {keysPressed.splice(keysPressed.indexOf(e.keyCode), 1); hindMovement();});
 
         const hindMovement = () => {
-            
+
             if(!keysPressed.includes(32)){
                 this.car.setBrake(0, 0);
                 this.car.setBrake(0, 1);
@@ -180,9 +189,9 @@ export class Car {
                 else if(keysPressed.includes(68) || keysPressed.includes(39)) {
                     this.car.setSteeringValue(maxSteerVal * -1, 2);
                     this.car.setSteeringValue(maxSteerVal * -1, 3);
-                } 
+                }
                 else stopSteer();
-                
+
                 if(keysPressed.includes(83) || keysPressed.includes(40)) {
                     this.car.applyEngineForce(maxForce * 1, 0);
                     this.car.applyEngineForce(maxForce * 1, 1);
@@ -194,7 +203,7 @@ export class Car {
                     this.car.applyEngineForce(maxForce * -1, 1);
                     this.car.applyEngineForce(maxForce * -1, 2);
                     this.car.applyEngineForce(maxForce * -1, 3);
-                } 
+                }
                 else stopCar();
             }
             else
@@ -208,7 +217,7 @@ export class Car {
             this.car.chassisBody.angularVelocity.copy(this.car.chassisBody.initAngularVelocity);
         }
 
-        const brake = () => {    
+        const brake = () => {
             this.car.setBrake(brakeForce * 2.4, 0);
             this.car.setBrake(brakeForce * 2.4, 1);
             this.car.setBrake(brakeForce * 2.4, 2);
@@ -265,7 +274,7 @@ export class Car {
         this.gui.Register({folder: 'Chassis Model Position', object: this.chassisModelPos, property: 'x', type: 'range', label: 'x', min: -10, max: 10, step: 0.01,})
         this.gui.Register({folder: 'Chassis Model Position', object: this.chassisModelPos, property: 'y', type: 'range', label: 'y', min: -10, max: 10, step: 0.01,})
         this.gui.Register({folder: 'Chassis Model Position', object: this.chassisModelPos, property: 'z', type: 'range', label: 'z', min: -10, max: 10, step: 0.01,})
-        
+
         this.gui.Register({folder: 'Wheels', object: this.wheelScale, type: 'range', label: 'Front Wheels Scale', property: 'frontWheel', min: 0, max: 5, step: 0.01, onChange: () => {
             for(let i = 2 ; i < 4 ; i++) {
                 const scaleSide = i === 3 ? -1 : 1;
@@ -302,22 +311,22 @@ export class Car {
             this.wheels[0].helpWheels.geometry = cylinderGeometry;
             this.wheels[1].helpWheels.geometry = cylinderGeometry;
         }});
-        
+
         this.gui.Register({folder: 'Wheel Helper Position', type: 'folder', label: 'Left Front Wheel', open: true});
         this.gui.Register({folder: 'Left Front Wheel', object: this.car.wheelInfos[2].chassisConnectionPointLocal, property: 'x', type: 'range', label: 'x', min: -10, max: 10, step: 0.01});
         this.gui.Register({folder: 'Left Front Wheel', object: this.car.wheelInfos[2].chassisConnectionPointLocal, property: 'y', type: 'range', label: 'y', min: -10, max: 10, step: 0.01});
         this.gui.Register({folder: 'Left Front Wheel', object: this.car.wheelInfos[2].chassisConnectionPointLocal, property: 'z', type: 'range', label: 'z', min: -10, max: 10, step: 0.01});
-        
+
         this.gui.Register({folder: 'Wheel Helper Position', type: 'folder', label: 'Right Front Wheel', open: true});
         this.gui.Register({folder: 'Right Front Wheel', object: this.car.wheelInfos[3].chassisConnectionPointLocal, property: 'x', type: 'range', label: 'x', min: -10, max: 10, step: 0.01});
         this.gui.Register({folder: 'Right Front Wheel', object: this.car.wheelInfos[3].chassisConnectionPointLocal, property: 'y', type: 'range', label: 'y', min: -10, max: 10, step: 0.01});
         this.gui.Register({folder: 'Right Front Wheel', object: this.car.wheelInfos[3].chassisConnectionPointLocal, property: 'z', type: 'range', label: 'z', min: -10, max: 10, step: 0.01});
-        
+
         this.gui.Register({folder: 'Wheel Helper Position', type: 'folder', label: 'Left Hind Wheel', open: true});
         this.gui.Register({folder: 'Left Hind Wheel', object: this.car.wheelInfos[0].chassisConnectionPointLocal, property: 'x', type: 'range', label: 'x', min: -10, max: 10, step: 0.01});
         this.gui.Register({folder: 'Left Hind Wheel', object: this.car.wheelInfos[0].chassisConnectionPointLocal, property: 'y', type: 'range', label: 'y', min: -10, max: 10, step: 0.01});
         this.gui.Register({folder: 'Left Hind Wheel', object: this.car.wheelInfos[0].chassisConnectionPointLocal, property: 'z', type: 'range', label: 'z', min: -10, max: 10, step: 0.01});
-        
+
         this.gui.Register({folder: 'Wheel Helper Position', type: 'folder', label: 'Right Hind Wheel', open: true});
         this.gui.Register({folder: 'Right Hind Wheel', object: this.car.wheelInfos[1].chassisConnectionPointLocal, property: 'x', type: 'range', label: 'x', min: -10, max: 10, step: 0.01});
         this.gui.Register({folder: 'Right Hind Wheel', object: this.car.wheelInfos[1].chassisConnectionPointLocal, property: 'y', type: 'range', label: 'y', min: -10, max: 10, step: 0.01});

@@ -8,6 +8,8 @@ import Guify from 'guify'
 import Stats from 'stats.js';
 import {Car} from './world/car';
 
+const loader = document.querySelector('.loader');
+
 var stats = new Stats();
 stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild( stats.dom );
@@ -32,11 +34,19 @@ const canvas = document.querySelector('canvas.webgl')
 const scene = new THREE.Scene()
 const world = new CANNON.World({
     gravity: new CANNON.Vec3(0, -9.82, 0), // m/s²
-})  
+})
 world.broadphase = new CANNON.SAPBroadphase(world);
 // cannonDebugger(scene, world.bodies, {color: 0x00ff00})
 
 const car = new Car(scene, world, gui, loadingManager);
+loadingManager.onProgress = (url, itemsLoaded, itemsTotal) => {
+    loader.textContent = `${Math.round(itemsLoaded / itemsTotal * 100)}% Loading...`;
+    if(itemsLoaded === itemsTotal) {
+      setTimeout(() => {
+        loader.style.opacity = '0';
+      }, 2000);
+    }
+}
 loadingManager.onLoad = () => {
     car.init();
 }
@@ -169,7 +179,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
  */
 const timeStep = 1 / 60 // seconds
 let lastCallTime
- 
+
 const tick = () =>
 {
     stats.begin();
