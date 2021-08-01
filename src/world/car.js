@@ -19,7 +19,7 @@ export class Car {
         this.wheels = [];
         this.chassisDimension = {x: 1.96, y: 1, z: 4.47};
         this.chassisModelPos = {x: 0, y: -0.59, z: 0};
-        this.wheelScale = {}
+        this.wheelScale = {frontWheel: 0.67, hindWheel: 0.67};
 
         this.loadModels();
     }
@@ -49,10 +49,6 @@ export class Car {
             this.chassis.helpChassis = new THREE.Mesh(this.chassis.helpChassisGeo, this.chassis.helpChassisMat);
             this.scene.add(this.chassis, this.chassis.helpChassis);
         })
-        this.wheelScale = {
-            frontWheel: 0.67,
-            hindWheel: 0.67,
-        };
         this.wheels = [];
         for(let i = 0 ; i < 4 ; i++) {
             gltfLoader.load(`./models/${demo_car}/draco/wheel.gltf`, gltf => {
@@ -278,7 +274,7 @@ export class Car {
                 this.car.wheelInfos[i] = {...this.car.wheelInfos[i], ...vehicleOptions};
             }
         }
-        resetCar(); 
+        resetCar();
 
         this.gui.Register({folder: 'Chassis Helper Dimension', object: this.chassisDimension, property: 'x', type: 'range', label: 'x', min: 0, max: 10, step: 0.01, onChange: updateGuiChanges})
         this.gui.Register({folder: 'Chassis Helper Dimension', object: this.chassisDimension, property: 'y', type: 'range', label: 'y', min: 0, max: 10, step: 0.01, onChange: updateGuiChanges})
