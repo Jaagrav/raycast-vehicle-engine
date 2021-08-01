@@ -123,7 +123,7 @@ export class Car {
             frictionSlip: 30,
             dampingRelaxation: 2.3,
             dampingCompression: 4.3,
-            maxSuspensionForce: 500000,
+            maxSuspensionForce: 10000,
             rollInfluence:  0.01,
             axleLocal: new CANNON.Vec3(-1, 0, 0),
             chassisConnectionPointLocal: new CANNON.Vec3(0, 0, 0),
@@ -211,10 +211,10 @@ export class Car {
         }
 
         const resetCar = () => {
-            this.car.chassisBody.position.y = 4;
-            this.car.chassisBody.quaternion.copy(this.car.chassisBody.initQuaternion);
-            this.car.chassisBody.velocity.copy(this.car.chassisBody.initVelocity);
-            this.car.chassisBody.angularVelocity.copy(this.car.chassisBody.initAngularVelocity);
+            this.car.chassisBody.position.set(0, 4, 0);
+            this.car.chassisBody.quaternion.set(0, 0, 0, 1);
+            this.car.chassisBody.angularVelocity.set(0, 0, 0);
+            this.car.chassisBody.velocity.set(0, 0, 0);
         }
 
         const brake = () => {
@@ -238,6 +238,16 @@ export class Car {
     }
 
     guiRegisterer() {
+        const vehicleOptions = {
+            suspensionStiffness: 55,
+            suspensionRestLength: 0.5,
+            frictionSlip: 30,
+            dampingRelaxation: 2.3,
+            dampingCompression: 4.3,
+            maxSuspensionForce: 10000,
+            maxSuspensionTravel: 1,
+            rollInfluence:  0.01,
+        };
         const resetCar = () => {
             this.car.chassisBody.position.set(0, 4, 0);
             this.car.chassisBody.quaternion.set(0, 0, 0, 1);
@@ -263,7 +273,12 @@ export class Car {
             this.car.chassisBody.addShape(new CANNON.Box(new CANNON.Vec3(this.chassisDimension.x * 0.5, this.chassisDimension.y * 0.5, this.chassisDimension.z * 0.5)));
             this.chassis.helpChassis.scale.set(this.chassisDimension.x, this.chassisDimension.y, this.chassisDimension.z);
         }
-        resetCar();
+        const updateWheelOptions = () => {
+            for(let i = 0 ; i < this.car.wheelInfos.length; i++) {
+                this.car.wheelInfos[i] = {...this.car.wheelInfos[i], ...vehicleOptions};
+            }
+        }
+        resetCar(); 
 
         this.gui.Register({folder: 'Chassis Helper Dimension', object: this.chassisDimension, property: 'x', type: 'range', label: 'x', min: 0, max: 10, step: 0.01, onChange: updateGuiChanges})
         this.gui.Register({folder: 'Chassis Helper Dimension', object: this.chassisDimension, property: 'y', type: 'range', label: 'y', min: 0, max: 10, step: 0.01, onChange: updateGuiChanges})
@@ -331,6 +346,17 @@ export class Car {
         this.gui.Register({folder: 'Right Hind Wheel', object: this.car.wheelInfos[1].chassisConnectionPointLocal, property: 'x', type: 'range', label: 'x', min: -10, max: 10, step: 0.01});
         this.gui.Register({folder: 'Right Hind Wheel', object: this.car.wheelInfos[1].chassisConnectionPointLocal, property: 'y', type: 'range', label: 'y', min: -10, max: 10, step: 0.01});
         this.gui.Register({folder: 'Right Hind Wheel', object: this.car.wheelInfos[1].chassisConnectionPointLocal, property: 'z', type: 'range', label: 'z', min: -10, max: 10, step: 0.01});
+
+        this.gui.Register({folder: 'Vehicle', object: this.car.chassisBody, property: 'mass', type: 'range', label: 'Mass', min: 1, max: 1000, step: 1});
+
+        this.gui.Register({folder: 'Vehicle', object: vehicleOptions, property:'suspensionStiffness', type: 'range', label:'Suspension Stiffness', min: 0, max: 100, step: 1, onChange: updateWheelOptions});
+        this.gui.Register({folder: 'Vehicle', object: vehicleOptions, property:'suspensionRestLength', type: 'range', label:'Suspension Rest Height', min: -10, max: 10, step: 0.1, onChange: updateWheelOptions});
+        this.gui.Register({folder: 'Vehicle', object: vehicleOptions, property:'frictionSlip', type: 'range', label:'Friction Slip', min: 0, max: 50, step: 1, onChange: updateWheelOptions});
+        this.gui.Register({folder: 'Vehicle', object: vehicleOptions, property:'dampingRelaxation', type: 'range', label:'Damping Relaxation', min: -10, max: 10, step: 0.1, onChange: updateWheelOptions});
+        this.gui.Register({folder: 'Vehicle', object: vehicleOptions, property:'dampingCompression', type: 'range', label:'Damping Compression', min: -10, max: 10, step: 0.1, onChange: updateWheelOptions});
+        this.gui.Register({folder: 'Vehicle', object: vehicleOptions, property:'maxSuspensionForce', type: 'range', label:'Max Suspension Force', min: -10000, max: 10000, step: 10, onChange: updateWheelOptions});
+        this.gui.Register({folder: 'Vehicle', object: vehicleOptions, property:'maxSuspensionTravel', type: 'range', label:'Max Suspension Travel', min: -10, max: 10, step: 1, onChange: updateWheelOptions});
+        this.gui.Register({folder: 'Vehicle', object: vehicleOptions, property:'rollInfluence', type: 'range', label:'Roll Influence', min: 0, max: 10, step: 0.1, onChange: updateWheelOptions});
     }
 
     update() {

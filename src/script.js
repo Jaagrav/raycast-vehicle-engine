@@ -22,6 +22,7 @@ const gui = new Guify({align: 'right', theme: 'dark', width: '400px', barMode: '
 gui.Register({type: 'folder', label: 'Upload', open: true})
 gui.Register({type: 'folder', label: 'Chassis', open: true})
 gui.Register({type: 'folder', label: 'Wheels', open: true})
+gui.Register({type: 'folder', label: 'Vehicle', open: true})
 gui.Register({folder: 'Chassis', type: 'folder', label: 'Chassis Helper', open: true})
 gui.Register({folder: 'Chassis', type: 'folder', label: 'Chassis Model', open: true})
 gui.Register({folder: 'Chassis Helper', type: 'folder', label: 'Chassis Helper Dimension', open: true})
