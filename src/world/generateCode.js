@@ -7,6 +7,7 @@ export default class GenerateCode {
 
     generateCode() {
         console.log(this.Car);
+        const {primaryKeys, secondaryKeys} = this.Car.controlOptions;
         const code =
         `
 import * as THREE from 'three';
@@ -100,46 +101,52 @@ export default class Car {
 
     controls() {
         const maxSteerVal = ${this.Car.controlOptions.maxSteerVal};
-        const maxForce = ${this.controlOptions.maxForce};
-        const brakeForce = ${this.controlOptions.brakeForce};
-        const slowDownCar = ${this.controlOptions.slowDownCar};
+        const maxForce = ${this.Car.controlOptions.maxForce};
+        const brakeForce = ${this.Car.controlOptions.brakeForce};
+        const slowDownCar = ${this.Car.controlOptions.slowDownCar};
         const keysPressed = [];
 
         window.addEventListener('keydown', (e) => {
-            if(e.key === 'r') resetCar();
-            if(!keysPressed.includes(e.keyCode)) keysPressed.push(e.keyCode);
+            // e.preventDefault();
+            if(!keysPressed.includes(e.key.toLowerCase())) keysPressed.push(e.key.toLowerCase());
             hindMovement();
         });
-        window.addEventListener('keyup', (e) => {keysPressed.splice(keysPressed.indexOf(e.keyCode), 1); hindMovement();});
+        window.addEventListener('keyup', (e) => {
+            // e.preventDefault();
+            keysPressed.splice(keysPressed.indexOf(e.key.toLowerCase()), 1);
+            hindMovement();
+        });
 
         const hindMovement = () => {
+            if(keysPressed.includes("${primaryKeys.reset}") || keysPressed.includes("${secondaryKeys.reset}")) resetCar();
 
-            if(!keysPressed.includes(32)){
+            if(!keysPressed.includes("${primaryKeys.brake}") && !keysPressed.includes("${secondaryKeys.brake}")){
                 this.car.setBrake(0, 0);
                 this.car.setBrake(0, 1);
                 this.car.setBrake(0, 2);
                 this.car.setBrake(0, 3);
-                if(keysPressed.includes(65) || keysPressed.includes(37)) {
-                    this.car.setSteeringValue(maxSteerVal * 1, 2);
-                    this.car.setSteeringValue(maxSteerVal * 1, 3);
+
+                if(keysPressed.includes("${primaryKeys.left}") || keysPressed.includes("${secondaryKeys.left}")) {
+                    this.car.setSteeringValue(this.controlOptions.maxSteerVal * 1, 2);
+                    this.car.setSteeringValue(this.controlOptions.maxSteerVal * 1, 3);
                 }
-                else if(keysPressed.includes(68) || keysPressed.includes(39)) {
-                    this.car.setSteeringValue(maxSteerVal * -1, 2);
-                    this.car.setSteeringValue(maxSteerVal * -1, 3);
+                else if(keysPressed.includes("${primaryKeys.right}") || keysPressed.includes("${secondaryKeys.right}")) {
+                    this.car.setSteeringValue(this.controlOptions.maxSteerVal * -1, 2);
+                    this.car.setSteeringValue(this.controlOptions.maxSteerVal * -1, 3);
                 }
                 else stopSteer();
 
-                if(keysPressed.includes(83) || keysPressed.includes(40)) {
-                    this.car.applyEngineForce(maxForce * 1, 0);
-                    this.car.applyEngineForce(maxForce * 1, 1);
-                    this.car.applyEngineForce(maxForce * 1, 2);
-                    this.car.applyEngineForce(maxForce * 1, 3);
+                if(keysPressed.includes("${primaryKeys.forward}") || keysPressed.includes("${secondaryKeys.forward}")) {
+                    this.car.applyEngineForce(this.controlOptions.maxForce * -1, 0);
+                    this.car.applyEngineForce(this.controlOptions.maxForce * -1, 1);
+                    this.car.applyEngineForce(this.controlOptions.maxForce * -1, 2);
+                    this.car.applyEngineForce(this.controlOptions.maxForce * -1, 3);
                 }
-                else if(keysPressed.includes(87) || keysPressed.includes(38)) {
-                    this.car.applyEngineForce(maxForce * -1, 0);
-                    this.car.applyEngineForce(maxForce * -1, 1);
-                    this.car.applyEngineForce(maxForce * -1, 2);
-                    this.car.applyEngineForce(maxForce * -1, 3);
+                else if(keysPressed.includes("${primaryKeys.backward}") || keysPressed.includes("${secondaryKeys.backward}")) {
+                    this.car.applyEngineForce(this.controlOptions.maxForce * 1, 0);
+                    this.car.applyEngineForce(this.controlOptions.maxForce * 1, 1);
+                    this.car.applyEngineForce(this.controlOptions.maxForce * 1, 2);
+                    this.car.applyEngineForce(this.controlOptions.maxForce * 1, 3);
                 }
                 else stopCar();
             }
@@ -155,17 +162,17 @@ export default class Car {
         }
 
         const brake = () => {
-            this.car.setBrake(brakeForce * 2.4, 0);
-            this.car.setBrake(brakeForce * 2.4, 1);
-            this.car.setBrake(brakeForce * 2.4, 2);
-            this.car.setBrake(brakeForce * 2.4, 3);
+            this.car.setBrake(brakeForce, 0);
+            this.car.setBrake(brakeForce, 1);
+            this.car.setBrake(brakeForce, 2);
+            this.car.setBrake(brakeForce, 3);
         }
 
         const stopCar = () => {
-            this.car.setBrake(brakeForce * 1.4, 0);
-            this.car.setBrake(brakeForce * 1.4, 1);
-            this.car.setBrake(brakeForce * 1.4, 2);
-            this.car.setBrake(brakeForce * 1.4, 3);
+            this.car.setBrake(slowDownCar, 0);
+            this.car.setBrake(slowDownCar, 1);
+            this.car.setBrake(slowDownCar, 2);
+            this.car.setBrake(slowDownCar, 3);
         }
 
         const stopSteer = () => {
