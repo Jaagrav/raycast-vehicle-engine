@@ -99,9 +99,10 @@ export default class Car {
     }
 
     controls() {
-        const maxSteerVal = 0.5;
-        const maxForce = 750;
-        const brakeForce = 15;
+        const maxSteerVal = ${this.Car.controlOptions.maxSteerVal};
+        const maxForce = ${this.controlOptions.maxForce};
+        const brakeForce = ${this.controlOptions.brakeForce};
+        const slowDownCar = ${this.controlOptions.slowDownCar};
         const keysPressed = [];
 
         window.addEventListener('keydown', (e) => {

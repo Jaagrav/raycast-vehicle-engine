@@ -15,9 +15,6 @@ export class Car {
         this.loadingManager = loadingManager;
 
         this.car = {};
-        this.car.maxSteerVal = 0.5;
-        this.car.maxForce = 750;
-        this.car.brakeForce = 15;
         this.car.helpChassisGeo = {};
         this.car.helpChassisMat = {};
         this.car.helpChassis = {};
@@ -26,6 +23,28 @@ export class Car {
         this.chassisDimension = {x: 1.96, y: 1, z: 4.47};
         this.chassisModelPos = {x: 0, y: -0.59, z: 0};
         this.wheelScale = {frontWheel: 0.67, hindWheel: 0.67};
+        this.controlOptions = {
+            maxSteerVal: 0.5,
+            maxForce: 750,
+            brakeForce: 36,
+            slowDownCar: 19.6,
+            primaryKeys: {
+                forward: 'w',
+                backward: 's',
+                left: 'a',
+                right: 'd',
+                reset: 'r',
+                brake: ' '
+            },
+            secondaryKeys: {
+                forward: 'arrowup',
+                backward: 'arrowdown',
+                left: 'arrowleft',
+                right: 'arrowright',
+                reset: 'r',
+                brake: ' '
+            }
+        };
 
         this.loadModels();
     }
@@ -168,40 +187,48 @@ export class Car {
         const keysPressed = [];
 
         window.addEventListener('keydown', (e) => {
-            if(e.key === 'r') resetCar();
-            if(!keysPressed.includes(e.keyCode)) keysPressed.push(e.keyCode);
+            // e.preventDefault();
+            if(!keysPressed.includes(e.key.toLowerCase())) keysPressed.push(e.key.toLowerCase());
             hindMovement();
         });
-        window.addEventListener('keyup', (e) => {keysPressed.splice(keysPressed.indexOf(e.keyCode), 1); hindMovement();});
+        window.addEventListener('keyup', (e) => {
+            // e.preventDefault();
+            keysPressed.splice(keysPressed.indexOf(e.key.toLowerCase()), 1);
+            hindMovement();
+        });
 
         const hindMovement = () => {
+            const {primaryKeys, secondaryKeys} = this.controlOptions;
 
-            if(!keysPressed.includes(32)){
+            if(keysPressed.includes(primaryKeys.reset) || keysPressed.includes(secondaryKeys.reset)) resetCar();
+
+            if(!keysPressed.includes(primaryKeys.brake) && !keysPressed.includes(secondaryKeys.brake)){
                 this.car.setBrake(0, 0);
                 this.car.setBrake(0, 1);
                 this.car.setBrake(0, 2);
                 this.car.setBrake(0, 3);
-                if(keysPressed.includes(65) || keysPressed.includes(37)) {
-                    this.car.setSteeringValue(this.car.maxSteerVal * 1, 2);
-                    this.car.setSteeringValue(this.car.maxSteerVal * 1, 3);
+
+                if(keysPressed.includes(primaryKeys.left) || keysPressed.includes(secondaryKeys.left)) {
+                    this.car.setSteeringValue(this.controlOptions.maxSteerVal * 1, 2);
+                    this.car.setSteeringValue(this.controlOptions.maxSteerVal * 1, 3);
                 }
-                else if(keysPressed.includes(68) || keysPressed.includes(39)) {
-                    this.car.setSteeringValue(this.car.maxSteerVal * -1, 2);
-                    this.car.setSteeringValue(this.car.maxSteerVal * -1, 3);
+                else if(keysPressed.includes(primaryKeys.right) || keysPressed.includes(secondaryKeys.right)) {
+                    this.car.setSteeringValue(this.controlOptions.maxSteerVal * -1, 2);
+                    this.car.setSteeringValue(this.controlOptions.maxSteerVal * -1, 3);
                 }
                 else stopSteer();
 
-                if(keysPressed.includes(83) || keysPressed.includes(40)) {
-                    this.car.applyEngineForce(this.car.maxForce * 1, 0);
-                    this.car.applyEngineForce(this.car.maxForce * 1, 1);
-                    this.car.applyEngineForce(this.car.maxForce * 1, 2);
-                    this.car.applyEngineForce(this.car.maxForce * 1, 3);
+                if(keysPressed.includes(primaryKeys.forward) || keysPressed.includes(secondaryKeys.forward)) {
+                    this.car.applyEngineForce(this.controlOptions.maxForce * -1, 0);
+                    this.car.applyEngineForce(this.controlOptions.maxForce * -1, 1);
+                    this.car.applyEngineForce(this.controlOptions.maxForce * -1, 2);
+                    this.car.applyEngineForce(this.controlOptions.maxForce * -1, 3);
                 }
-                else if(keysPressed.includes(87) || keysPressed.includes(38)) {
-                    this.car.applyEngineForce(this.car.maxForce * -1, 0);
-                    this.car.applyEngineForce(this.car.maxForce * -1, 1);
-                    this.car.applyEngineForce(this.car.maxForce * -1, 2);
-                    this.car.applyEngineForce(this.car.maxForce * -1, 3);
+                else if(keysPressed.includes(primaryKeys.backward) || keysPressed.includes(secondaryKeys.backward)) {
+                    this.car.applyEngineForce(this.controlOptions.maxForce * 1, 0);
+                    this.car.applyEngineForce(this.controlOptions.maxForce * 1, 1);
+                    this.car.applyEngineForce(this.controlOptions.maxForce * 1, 2);
+                    this.car.applyEngineForce(this.controlOptions.maxForce * 1, 3);
                 }
                 else stopCar();
             }
@@ -217,17 +244,17 @@ export class Car {
         }
 
         const brake = () => {
-            this.car.setBrake(this.car.brakeForce * 2.4, 0);
-            this.car.setBrake(this.car.brakeForce * 2.4, 1);
-            this.car.setBrake(this.car.brakeForce * 2.4, 2);
-            this.car.setBrake(this.car.brakeForce * 2.4, 3);
+            this.car.setBrake(this.controlOptions.brakeForce, 0);
+            this.car.setBrake(this.controlOptions.brakeForce, 1);
+            this.car.setBrake(this.controlOptions.brakeForce, 2);
+            this.car.setBrake(this.controlOptions.brakeForce, 3);
         }
 
         const stopCar = () => {
-            this.car.setBrake(this.car.brakeForce * 1.4, 0);
-            this.car.setBrake(this.car.brakeForce * 1.4, 1);
-            this.car.setBrake(this.car.brakeForce * 1.4, 2);
-            this.car.setBrake(this.car.brakeForce * 1.4, 3);
+            this.car.setBrake(this.controlOptions.slowDownCar, 0);
+            this.car.setBrake(this.controlOptions.slowDownCar, 1);
+            this.car.setBrake(this.controlOptions.slowDownCar, 2);
+            this.car.setBrake(this.controlOptions.slowDownCar, 3);
         }
 
         const stopSteer = () => {
@@ -237,6 +264,7 @@ export class Car {
     }
 
     guiRegisterer() {
+        const controllableKeysArray = [' ', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'control', 'alt', 'shift', 'meta', 'tab']
         const vehicleOptions = {
             suspensionStiffness: 55,
             suspensionRestLength: 0.5,
@@ -356,6 +384,28 @@ export class Car {
         this.gui.Register({folder: 'Vehicle', object: vehicleOptions, property:'maxSuspensionForce', type: 'range', label:'Max Suspension Force', min: -10000, max: 10000, step: 10, onChange: updateWheelOptions});
         this.gui.Register({folder: 'Vehicle', object: vehicleOptions, property:'maxSuspensionTravel', type: 'range', label:'Max Suspension Travel', min: -10, max: 10, step: 1, onChange: updateWheelOptions});
         this.gui.Register({folder: 'Vehicle', object: vehicleOptions, property:'rollInfluence', type: 'range', label:'Roll Influence', min: 0, max: 10, step: 0.1, onChange: updateWheelOptions});
+
+        this.gui.Register({folder: 'Vehicle', type: 'folder', label: 'Controls', open: true});
+        this.gui.Register({folder: 'Controls', object: this.controlOptions, property:'maxSteerVal', type: 'range', label:'Max Steer Value', min: 0, max: 1, step: 0.01});
+        this.gui.Register({folder: 'Controls', object: this.controlOptions, property:'maxForce', type: 'range', label:'Max Force', min: 1, max: 10000, step: 10});
+        this.gui.Register({folder: 'Controls', object: this.controlOptions, property:'brakeForce', type: 'range', label:'Brake Force', min: 1, max: 100, step: 0.1});
+        this.gui.Register({folder: 'Controls', object: this.controlOptions, property:'slowDownCar', type: 'range', label:'Slow Car Force', min: 1, max: 100, step: 0.1});
+
+        this.gui.Register({folder: 'Controls', type: 'folder', label: 'Primary Keys Controls', open: true});
+        this.gui.Register({folder: 'Primary Keys Controls', object: this.controlOptions.primaryKeys, property: 'forward', type: 'select', label: 'Move Forward', options: controllableKeysArray})
+        this.gui.Register({folder: 'Primary Keys Controls', object: this.controlOptions.primaryKeys, property: 'backward', type: 'select', label: 'Move Backward', options: controllableKeysArray})
+        this.gui.Register({folder: 'Primary Keys Controls', object: this.controlOptions.primaryKeys, property: 'left', type: 'select', label: 'Turn Left', options: controllableKeysArray})
+        this.gui.Register({folder: 'Primary Keys Controls', object: this.controlOptions.primaryKeys, property: 'right', type: 'select', label: 'Turn Right', options: controllableKeysArray})
+        this.gui.Register({folder: 'Primary Keys Controls', object: this.controlOptions.primaryKeys, property: 'brake', type: 'select', label: 'Apply Brakes', options: controllableKeysArray})
+        this.gui.Register({folder: 'Primary Keys Controls', object: this.controlOptions.primaryKeys, property: 'reset', type: 'select', label: 'Reset Car Position', options: controllableKeysArray})
+
+        this.gui.Register({folder: 'Controls', type: 'folder', label: 'Secondary Keys Controls', open: true});
+        this.gui.Register({folder: 'Secondary Keys Controls', object: this.controlOptions.secondaryKeys, property: 'forward', type: 'select', label: 'Move Forward', options: controllableKeysArray})
+        this.gui.Register({folder: 'Secondary Keys Controls', object: this.controlOptions.secondaryKeys, property: 'backward', type: 'select', label: 'Move Backward', options: controllableKeysArray})
+        this.gui.Register({folder: 'Secondary Keys Controls', object: this.controlOptions.secondaryKeys, property: 'left', type: 'select', label: 'Turn Left', options: controllableKeysArray})
+        this.gui.Register({folder: 'Secondary Keys Controls', object: this.controlOptions.secondaryKeys, property: 'right', type: 'select', label: 'Turn Right', options: controllableKeysArray})
+        this.gui.Register({folder: 'Secondary Keys Controls', object: this.controlOptions.secondaryKeys, property: 'brake', type: 'select', label: 'Apply Brakes', options: controllableKeysArray})
+        this.gui.Register({folder: 'Secondary Keys Controls', object: this.controlOptions.secondaryKeys, property: 'reset', type: 'select', label: 'Reset Car Position', options: controllableKeysArray})
 
         this.gui.Register({folder: 'Generate Code', type: 'button', label: 'Copy to clipboard', action: () => {
             const generateCode = new GenerateCode(this);
