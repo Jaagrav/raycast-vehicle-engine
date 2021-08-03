@@ -4,7 +4,8 @@ import * as CANNON from 'cannon-es';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 
-import GenerateCode from "./generateCode"
+import copy from "copy-to-clipboard";
+import GenerateCode from "./generateCode";
 
 export class Car {
     constructor(scene, world, gui, loadingManager) {
@@ -14,6 +15,9 @@ export class Car {
         this.loadingManager = loadingManager;
 
         this.car = {};
+        this.car.maxSteerVal = 0.5;
+        this.car.maxForce = 750;
+        this.car.brakeForce = 15;
         this.car.helpChassisGeo = {};
         this.car.helpChassisMat = {};
         this.car.helpChassis = {};
@@ -161,9 +165,6 @@ export class Car {
     }
 
     controls() {
-        const maxSteerVal = 0.5;
-        const maxForce = 750;
-        const brakeForce = 15;
         const keysPressed = [];
 
         window.addEventListener('keydown', (e) => {
@@ -181,26 +182,26 @@ export class Car {
                 this.car.setBrake(0, 2);
                 this.car.setBrake(0, 3);
                 if(keysPressed.includes(65) || keysPressed.includes(37)) {
-                    this.car.setSteeringValue(maxSteerVal * 1, 2);
-                    this.car.setSteeringValue(maxSteerVal * 1, 3);
+                    this.car.setSteeringValue(this.car.maxSteerVal * 1, 2);
+                    this.car.setSteeringValue(this.car.maxSteerVal * 1, 3);
                 }
                 else if(keysPressed.includes(68) || keysPressed.includes(39)) {
-                    this.car.setSteeringValue(maxSteerVal * -1, 2);
-                    this.car.setSteeringValue(maxSteerVal * -1, 3);
+                    this.car.setSteeringValue(this.car.maxSteerVal * -1, 2);
+                    this.car.setSteeringValue(this.car.maxSteerVal * -1, 3);
                 }
                 else stopSteer();
 
                 if(keysPressed.includes(83) || keysPressed.includes(40)) {
-                    this.car.applyEngineForce(maxForce * 1, 0);
-                    this.car.applyEngineForce(maxForce * 1, 1);
-                    this.car.applyEngineForce(maxForce * 1, 2);
-                    this.car.applyEngineForce(maxForce * 1, 3);
+                    this.car.applyEngineForce(this.car.maxForce * 1, 0);
+                    this.car.applyEngineForce(this.car.maxForce * 1, 1);
+                    this.car.applyEngineForce(this.car.maxForce * 1, 2);
+                    this.car.applyEngineForce(this.car.maxForce * 1, 3);
                 }
                 else if(keysPressed.includes(87) || keysPressed.includes(38)) {
-                    this.car.applyEngineForce(maxForce * -1, 0);
-                    this.car.applyEngineForce(maxForce * -1, 1);
-                    this.car.applyEngineForce(maxForce * -1, 2);
-                    this.car.applyEngineForce(maxForce * -1, 3);
+                    this.car.applyEngineForce(this.car.maxForce * -1, 0);
+                    this.car.applyEngineForce(this.car.maxForce * -1, 1);
+                    this.car.applyEngineForce(this.car.maxForce * -1, 2);
+                    this.car.applyEngineForce(this.car.maxForce * -1, 3);
                 }
                 else stopCar();
             }
@@ -216,17 +217,17 @@ export class Car {
         }
 
         const brake = () => {
-            this.car.setBrake(brakeForce * 2.4, 0);
-            this.car.setBrake(brakeForce * 2.4, 1);
-            this.car.setBrake(brakeForce * 2.4, 2);
-            this.car.setBrake(brakeForce * 2.4, 3);
+            this.car.setBrake(this.car.brakeForce * 2.4, 0);
+            this.car.setBrake(this.car.brakeForce * 2.4, 1);
+            this.car.setBrake(this.car.brakeForce * 2.4, 2);
+            this.car.setBrake(this.car.brakeForce * 2.4, 3);
         }
 
         const stopCar = () => {
-            this.car.setBrake(brakeForce * 1.4, 0);
-            this.car.setBrake(brakeForce * 1.4, 1);
-            this.car.setBrake(brakeForce * 1.4, 2);
-            this.car.setBrake(brakeForce * 1.4, 3);
+            this.car.setBrake(this.car.brakeForce * 1.4, 0);
+            this.car.setBrake(this.car.brakeForce * 1.4, 1);
+            this.car.setBrake(this.car.brakeForce * 1.4, 2);
+            this.car.setBrake(this.car.brakeForce * 1.4, 3);
         }
 
         const stopSteer = () => {
@@ -357,8 +358,8 @@ export class Car {
         this.gui.Register({folder: 'Vehicle', object: vehicleOptions, property:'rollInfluence', type: 'range', label:'Roll Influence', min: 0, max: 10, step: 0.1, onChange: updateWheelOptions});
 
         this.gui.Register({folder: 'Generate Code', type: 'button', label: 'Copy to clipboard', action: () => {
-            const generateCode = new GenerateCode(this.car, this.chassis, this.wheels);
-            generateCode.copyToClipboard();
+            const generateCode = new GenerateCode(this);
+            copy(generateCode.generateCode());
         }})
     }
 

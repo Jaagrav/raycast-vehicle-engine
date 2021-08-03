@@ -22,6 +22,7 @@
     "portfinder-sync": "0.0.2",
     "raw-loader": "^4.0.2",
     "stats.js": "^0.17.0",
+    "stringify-object": "^3.3.0",
     "style-loader": "^2.0.0",
     "three": "^0.124.0",
     "webpack": "^5.14.0",

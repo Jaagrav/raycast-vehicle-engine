@@ -1,13 +1,12 @@
-import copy from "copy-to-clipboard";
+import stringifyObject from 'stringify-object';
 
 export default class GenerateCode {
-    constructor(car, chassis, wheels) {
-        this.car = car;
-        this.chassis = chassis;
-        this.wheels = wheels;
+    constructor(obj) {
+        this.Car = {...obj};
     }
 
     generateCode() {
+        console.log(this.Car);
         const code =
         `
 import * as THREE from 'three';
@@ -24,16 +23,10 @@ export default class Car {
         this.car = {};
         this.chassis = {};
         this.wheels = [];
-        this.chassisDimension = {x: 1.96, y: 1, z: 4.47};
-        this.chassisModelPos = {x: 0, y: -0.59, z: 0};
-        this.wheelScale = {frontWheel: 0.67, hindWheel: 0.67};
-        this.wheelPositions = [
-            new CANNON.Vec3(0.75, 0.1, -1.32),
-            new CANNON.Vec3(-0.78, 0.1, -1.32),
-            new CANNON.Vec3(0.75, 0.1, 1.25),
-            new CANNON.Vec3(-0.78, 0.1, 1.25),
-        ];
-        this.mass = 250;
+        this.chassisDimension = ${stringifyObject(this.Car.chassisDimension)};
+        this.chassisModelPos = ${stringifyObject(this.Car.chassisModelPos)};
+        this.wheelScale = ${stringifyObject(this.Car.wheelScale)};
+        this.mass = ${this.Car.car.chassisBody.mass};
     }
 
     init() {
@@ -87,34 +80,11 @@ export default class Car {
     }
 
     setWheels() {
-        const options = {
-            radius: 0.34,
-            directionLocal: new CANNON.Vec3(0, -1, 0),
-            suspensionStiffness: 55,
-            suspensionRestLength: 0.5,
-            frictionSlip: 30,
-            dampingRelaxation: 2.3,
-            dampingCompression: 4.3,
-            maxSuspensionForce: 10000,
-            rollInfluence:  0.01,
-            axleLocal: new CANNON.Vec3(-1, 0, 0),
-            chassisConnectionPointLocal: new CANNON.Vec3(0, 0, 0),
-            maxSuspensionTravel: 1,
-            customSlidingRotationalSpeed: 30,
-        };
-        const setWheelChassisConnectionPoint = (index, position) => {
-            this.car.wheelInfos[index].chassisConnectionPointLocal.copy(position);
-        }
-
         this.car.wheelInfos = [];
-        this.car.addWheel(options);
-        this.car.addWheel(options);
-        this.car.addWheel(options);
-        this.car.addWheel(options);
-        setWheelChassisConnectionPoint(0, this.wheelPositions[0]);
-        setWheelChassisConnectionPoint(1, this.wheelPositions[1]);
-        setWheelChassisConnectionPoint(2, this.wheelPositions[2]);
-        setWheelChassisConnectionPoint(3, this.wheelPositions[3]);
+        this.car.addWheel(${stringifyObject(this.Car.car.wheelInfos[0])});
+        this.car.addWheel(${stringifyObject(this.Car.car.wheelInfos[1])});
+        this.car.addWheel(${stringifyObject(this.Car.car.wheelInfos[2])});
+        this.car.addWheel(${stringifyObject(this.Car.car.wheelInfos[3])});
 
         this.car.wheelInfos.forEach( function(wheel, index) {
             const cylinderShape = new CANNON.Cylinder(wheel.radius, wheel.radius, wheel.radius / 2, 20)
@@ -227,11 +197,6 @@ export default class Car {
     `
 
         return code;
-    }
-
-    copyToClipboard() {
-        console.log('copying to clipboard', this.car, this.wheels, this.chassis);
-        copy(this.generateCode())
     }
 
 }
