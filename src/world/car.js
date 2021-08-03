@@ -4,6 +4,8 @@ import * as CANNON from 'cannon-es';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 
+import GenerateCode from "./generateCode"
+
 export class Car {
     constructor(scene, world, gui, loadingManager) {
         this.scene = scene;
@@ -353,6 +355,11 @@ export class Car {
         this.gui.Register({folder: 'Vehicle', object: vehicleOptions, property:'maxSuspensionForce', type: 'range', label:'Max Suspension Force', min: -10000, max: 10000, step: 10, onChange: updateWheelOptions});
         this.gui.Register({folder: 'Vehicle', object: vehicleOptions, property:'maxSuspensionTravel', type: 'range', label:'Max Suspension Travel', min: -10, max: 10, step: 1, onChange: updateWheelOptions});
         this.gui.Register({folder: 'Vehicle', object: vehicleOptions, property:'rollInfluence', type: 'range', label:'Roll Influence', min: 0, max: 10, step: 0.1, onChange: updateWheelOptions});
+
+        this.gui.Register({folder: 'Generate Code', type: 'button', label: 'Copy to clipboard', action: () => {
+            const generateCode = new GenerateCode(this.car, this.chassis, this.wheels);
+            generateCode.copyToClipboard();
+        }})
     }
 
     update() {

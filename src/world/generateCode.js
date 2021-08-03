@@ -1,6 +1,15 @@
-export default function generateCode(car, chassis, wheels) {
-    const code =
-    `
+import copy from "copy-to-clipboard";
+
+export default class GenerateCode {
+    constructor(car, chassis, wheels) {
+        this.car = car;
+        this.chassis = chassis;
+        this.wheels = wheels;
+    }
+
+    generateCode() {
+        const code =
+        `
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 
@@ -215,8 +224,14 @@ export default class Car {
         this.world.addEventListener('postStep', updateWorld);
     }
 }
+    `
 
-`
+        return code;
+    }
 
-    return code;
+    copyToClipboard() {
+        console.log('copying to clipboard', this.car, this.wheels, this.chassis);
+        copy(this.generateCode())
+    }
+
 }
