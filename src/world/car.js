@@ -19,6 +19,8 @@ export class Car {
         this.car.helpChassisMat = {};
         this.car.helpChassis = {};
         this.chassis = {};
+        this.chassisModel = {};
+        this.wheelModel = {};
         this.wheels = [];
         this.chassisDimension = {x: 1.96, y: 1, z: 4.47};
         this.chassisModelPos = {x: 0, y: -0.59, z: 0};
@@ -68,6 +70,7 @@ export class Car {
         const demo_car = 'mclaren';
 
         gltfLoader.load(`./models/${demo_car}/draco/chassis.gltf`, gltf => {
+            this.chassisModel = gltf;
             this.chassis = gltf.scene;
             this.chassis.helpChassisGeo = new THREE.BoxBufferGeometry(1, 1, 1);
             this.chassis.helpChassisMat = new THREE.MeshBasicMaterial({color: 0xff0000, wireframe: true});
@@ -77,6 +80,7 @@ export class Car {
         this.wheels = [];
         for(let i = 0 ; i < 4 ; i++) {
             gltfLoader.load(`./models/${demo_car}/draco/wheel.gltf`, gltf => {
+                this.wheelModel = gltf;
                 const model = gltf.scene;
                 this.wheels[i] = model;
                 if(i === 1 || i === 3)
@@ -92,6 +96,7 @@ export class Car {
         const addChassisViaUpload = (e) => {
             const gltfLoader = new GLTFLoader();
             gltfLoader.parse( e, '', function( gltf ){
+                obj.chassisModel = gltf;
                 obj.scene.remove(obj.chassis);
                 const temp = obj.chassis;
                 obj.chassis = gltf.scene;
@@ -103,6 +108,7 @@ export class Car {
             const gltfLoader = new GLTFLoader();
             for(let i = 0 ; i < 4 ; i++) {
                 gltfLoader.parse( e, '', function( gltf ){
+                    obj.wheelModel = gltf;
                     obj.scene.remove(obj.wheels[i]);
                     const temp = obj.wheels[i];
                     obj.wheels[i] = gltf.scene;

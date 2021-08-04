@@ -27,6 +27,7 @@
     "stringify-object": "^3.3.0",
     "style-loader": "^2.0.0",
     "three": "^0.124.0",
+    "three-gltf-exporter": "^0.0.1",
     "webpack": "^5.14.0",
     "webpack-cli": "^4.3.1",
     "webpack-dev-server": "^3.11.2",
