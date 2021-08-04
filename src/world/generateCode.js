@@ -1,12 +1,26 @@
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 import stringifyObject from 'stringify-object';
 
+var zip = new JSZip();
 export default class GenerateCode {
     constructor(obj) {
         this.Car = {...obj};
     }
 
     generateCode() {
-        console.log(this.Car);
+
+        this.generateCAR();
+        this.generateREADME();
+        this.generatePackageJSON();
+
+        zip.generateAsync({type : "blob"}).then((blob) => {
+            console.log("Generating code ZIP", blob);
+            saveAs(blob, "raycast-vehicle.zip");
+        })
+    }
+
+    generateCAR() {
         const {primaryKeys, secondaryKeys} = this.Car.controlOptions;
         const code =
         `
@@ -203,8 +217,60 @@ export default class Car {
     }
 }
     `
-
+        zip.file("src/world/car.js", code);
         return code;
     }
 
+    generatePackageJSON() {
+        zip.file("package.json", `
+{
+  "scripts": {
+    "build": "webpack --config ./bundler/webpack.prod.js",
+    "start": "webpack serve --config ./bundler/webpack.dev.js"
+  },
+  "dependencies": {
+    "@babel/core": "^7.12.10",
+    "@babel/preset-env": "^7.12.11",
+    "babel-loader": "^8.2.2",
+    "cannon-es": "^0.18.0",
+    "cannon-es-debugger": "^0.1.4",
+    "clean-webpack-plugin": "^3.0.0",
+    "copy-webpack-plugin": "^7.0.0",
+    "css-loader": "^5.0.1",
+    "file-loader": "^6.2.0",
+    "html-loader": "^1.3.2",
+    "html-webpack-plugin": "^5.0.0-alpha.7",
+    "mini-css-extract-plugin": "^1.3.4",
+    "portfinder-sync": "0.0.2",
+    "raw-loader": "^4.0.2",
+    "stats.js": "^0.17.0",
+    "style-loader": "^2.0.0",
+    "three": "^0.124.0",
+    "webpack": "^5.14.0",
+    "webpack-cli": "^4.3.1",
+    "webpack-dev-server": "^3.11.2",
+    "webpack-merge": "^5.7.3"
+  }
+}
+`)
+    }
+    generateREADME() {
+        zip.file("readme.md", `# Raycast Vehicle
+
+## Setup
+Download [Node.js](https://nodejs.org/en/download/).
+Run this followed commands:
+
+\`\`\` bash
+# Install dependencies (only the first time)
+npm install
+
+# Run the local server at localhost:8080
+npm run dev
+
+# Build for production in the dist/ directory
+npm run build
+\`\`\`
+`);
+    }
 }

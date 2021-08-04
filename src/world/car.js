@@ -409,7 +409,11 @@ export class Car {
 
         this.gui.Register({folder: 'Generate Code', type: 'button', label: 'Copy to clipboard', action: () => {
             const generateCode = new GenerateCode(this);
-            copy(generateCode.generateCode());
+            copy(generateCode.generateCAR());
+        }})
+        this.gui.Register({folder: 'Generate Code', type: 'button', label: 'Save as ZIP', action: () => {
+            const generateCode = new GenerateCode(this);
+            generateCode.generateCode();
         }})
     }
 
