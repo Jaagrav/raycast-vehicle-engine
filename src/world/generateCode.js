@@ -28,7 +28,7 @@ export default class GenerateCode {
         this.generateREADME();
         this.generatePackageJSON();
         this.generateEnvironmentMaps();
-        // this.saveCode();
+        this.saveCode();
     }
 
     generateBundler() {
@@ -268,12 +268,12 @@ scene.add(spotLight, spotLight2, spotLight3);
  */
 const cubeTextureLoader = new THREE.CubeTextureLoader()
 const cubeEnvironmentMapTexture = cubeTextureLoader.load([
-    "/textures/environmentMaps/px.jpg",
-    "/textures/environmentMaps/nx.jpg",
-    "/textures/environmentMaps/py.jpg",
-    "/textures/environmentMaps/ny.jpg",
-    "/textures/environmentMaps/pz.jpg",
-    "/textures/environmentMaps/nz.jpg",
+    "/textures/environmentMaps/px.png",
+    "/textures/environmentMaps/nx.png",
+    "/textures/environmentMaps/py.png",
+    "/textures/environmentMaps/ny.png",
+    "/textures/environmentMaps/pz.png",
+    "/textures/environmentMaps/nz.png",
 ])
 // scene.background = cubeEnvironmentMapTexture
 scene.environment = cubeEnvironmentMapTexture
