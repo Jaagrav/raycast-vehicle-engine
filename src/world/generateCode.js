@@ -448,7 +448,7 @@ export default class Car {
         const dracoLoader = new DRACOLoader();
 
         dracoLoader.setDecoderConfig({ type: 'js' })
-        dracoLoader.setDecoderPath('draco/');
+        dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
 
         gltfLoader.setDRACOLoader(dracoLoader);
 

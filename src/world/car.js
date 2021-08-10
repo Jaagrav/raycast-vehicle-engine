@@ -69,7 +69,7 @@ export class Car {
 
         const demo_car = 'mclaren';
 
-        gltfLoader.load(`./models/${demo_car}/chassis.gltf`, gltf => {
+        gltfLoader.load(`./models/${demo_car}/draco/chassis.gltf`, gltf => {
             this.chassisModel = gltf;
             this.chassis = gltf.scene;
             this.chassis.helpChassisGeo = new THREE.BoxBufferGeometry(1, 1, 1);
@@ -79,7 +79,7 @@ export class Car {
         })
         this.wheels = [];
         for(let i = 0 ; i < 4 ; i++) {
-            gltfLoader.load(`./models/${demo_car}/wheel.gltf`, gltf => {
+            gltfLoader.load(`./models/${demo_car}/draco/wheel.gltf`, gltf => {
                 this.wheelModel = gltf;
                 const model = gltf.scene;
                 this.wheels[i] = model;
