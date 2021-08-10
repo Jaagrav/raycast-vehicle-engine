@@ -419,6 +419,7 @@ import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 
 export default class Car {
     constructor(scene, world) {
@@ -444,6 +445,12 @@ export default class Car {
 
     loadModels() {
         const gltfLoader = new GLTFLoader();
+        const dracoLoader = new DRACOLoader();
+
+        dracoLoader.setDecoderConfig({ type: 'js' })
+        dracoLoader.setDecoderPath('draco/');
+
+        gltfLoader.setDRACOLoader(dracoLoader);
 
         gltfLoader.load("./car/chassis.gltf", gltf => {
             this.chassis = gltf.scene;
