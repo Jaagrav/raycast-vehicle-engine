@@ -1,0 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Abel&display=swap');
+
+*
+{
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body
+{
+    overflow: hidden;
+}
+
+.webgl
+{
+    position: fixed;
+    top: 0;
+    left: 0;
+    outline: none;
+}
+
+.loader {
+    position: fixed;
+    margin: auto;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 24px;
+    height: fit-content;
+    width: fit-content;
+    font-family: 'Abel', sans-serif;
+    font-size: 48px;
+    color: #fff;
+    background: #ffffff42;
+    border-radius: 24px;
+    backdrop-filter: blur(12px);
+    pointer-events: none;
+    transition: .3s ease-in-out;
+}
+
+.guify-panel_39NJay {
+    max-height: 100vh;
+    overflow: auto;
+}
+
+::-webkit-scrollbar {
+    background: #363636;
+    width: 15.5px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #707070;
+}
