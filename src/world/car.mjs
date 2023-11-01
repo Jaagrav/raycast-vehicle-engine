@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 
 import copy from "copy-to-clipboard";
-import GenerateCode from "./generateCode";
+import GenerateCode from "./generateCode.js";
 
 export class Car {
     constructor(scene, world, gui, loadingManager) {
@@ -65,18 +65,24 @@ export class Car {
         dracoLoader.setDecoderConfig({ type: 'js' })
         dracoLoader.setDecoderPath('draco/');
 
+        console.log(dracoLoader);
+
         gltfLoader.setDRACOLoader(dracoLoader);
 
         const demo_car = 'mclaren';
 
         gltfLoader.load(`./models/${demo_car}/draco/chassis.gltf`, gltf => {
+            console.log(gltf);
             this.chassisModel = gltf;
             this.chassis = gltf.scene;
-            this.chassis.helpChassisGeo = new THREE.BoxBufferGeometry(1, 1, 1);
+            this.chassis.helpChassisGeo = new THREE.BoxGeometry(1, 1, 1);
             this.chassis.helpChassisMat = new THREE.MeshBasicMaterial({color: 0xff0000, wireframe: true});
             this.chassis.helpChassis = new THREE.Mesh(this.chassis.helpChassisGeo, this.chassis.helpChassisMat);
             this.scene.add(this.chassis, this.chassis.helpChassis);
         })
+
+
+
         this.wheels = [];
         for(let i = 0 ; i < 4 ; i++) {
             gltfLoader.load(`./models/${demo_car}/draco/wheel.gltf`, gltf => {
@@ -97,7 +103,6 @@ export class Car {
             const gltfLoader = new GLTFLoader();
             gltfLoader.parse( e, '', function( gltf ){
                 obj.chassisModel = gltf;
-                console.log(gltf);
                 obj.scene.remove(obj.chassis);
                 const temp = obj.chassis;
                 obj.chassis = gltf.scene;

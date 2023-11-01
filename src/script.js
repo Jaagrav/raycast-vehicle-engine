@@ -1,24 +1,35 @@
+// Стили
 import './style.css'
+
+// Библиотеки Three.js
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { Reflector } from 'three/examples/jsm/objects/Reflector.js';
+import { Reflector } from 'three/examples/jsm/objects/Reflector.js'
+
+// Библиотеки Cannon.js и дебаггер
 import * as CANNON from 'cannon-es'
 import cannonDebugger from 'cannon-es-debugger'
-import Guify from 'guify'
-import Stats from 'stats.js';
-import {Car} from './world/car';
 
-const loader = document.querySelector('.loader');
+// GUI и статистика
+import Guify from 'guify';
+import Stats from 'stats.js'
 
-var stats = new Stats();
-stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
-document.body.appendChild( stats.dom );
+// Собственные модули
+import { Car } from './world/car.mjs'
+
+// Инициализация и прочее
+const loader = document.querySelector('.loader')
+
+let stats = new Stats()
+stats.showPanel(0)  // 0: fps, 1: ms, 2: mb, 3+: custom
+document.body.appendChild(stats.dom)
+
 
 /**
  * Base
  */
 // Canvas
-const gui = new Guify({align: 'right', theme: 'dark', width: '400px', barMode: 'none'})
+const gui = new Guify.guify({align: 'right', theme: 'dark', width: '400px', barMode: 'none'})
 gui.Register({type: 'folder', label: 'Upload', open: true})
 gui.Register({type: 'folder', label: 'Vehicle', open: true})
 gui.Register({type: 'folder', label: 'Chassis', open: true})
@@ -119,7 +130,7 @@ window.addEventListener('resize', () =>
 /**
  * Floor
  */
-const floorGeo = new THREE.PlaneBufferGeometry(100, 100);
+const floorGeo = new THREE.PlaneGeometry(100, 100);
 const floorMirror = new Reflector( floorGeo, {
     clipBias: 0.003,
     textureWidth: window.innerWidth * window.devicePixelRatio,
