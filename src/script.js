@@ -1,23 +1,17 @@
-// Стили
 import './style.css'
 
-// Библиотеки Three.js
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { Reflector } from 'three/examples/jsm/objects/Reflector.js'
 
-// Библиотеки Cannon.js и дебаггер
 import * as CANNON from 'cannon-es'
 import cannonDebugger from 'cannon-es-debugger'
 
-// GUI и статистика
 import Guify from 'guify';
 import Stats from 'stats.js'
 
-// Собственные модули
 import { Car } from './world/car.mjs'
 
-// Инициализация и прочее
 const loader = document.querySelector('.loader')
 
 let stats = new Stats()

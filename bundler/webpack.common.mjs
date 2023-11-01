@@ -3,7 +3,7 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCSSExtractPlugin from 'mini-css-extract-plugin';
 import path from 'path';
 
-const __dirname = path.resolve(); // В Node.js с поддержкой ES модулей __dirname не доступен по умолчанию
+const __dirname = path.resolve(); // In Node.js with support for ES modules __dirname is not available by default
 
 export default {
     entry: path.resolve(__dirname, './src/script.js'),
